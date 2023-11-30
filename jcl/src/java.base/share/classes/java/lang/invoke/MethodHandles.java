@@ -1527,32 +1527,7 @@ public class MethodHandles {
 								throw new IllegalAccessException(message);
 							}
 						}
-
-						/* JDK9 and beyond allow accessible private interface methods.
-						 * JDK8 throws AbstractMethodError for private interface methods.
-						 */
-						/*[IF !Sidecar19-SE]*/
-						/*insert the 'receiver' into the MethodType just as is done by InterfaceHandle */
-						type = type.insertParameterTypes(0, declaringClass);
-						
-						MethodHandle thrower = throwException(type.returnType(), AbstractMethodError.class);
-						MethodHandle constructor;
-						try {
-							constructor = IMPL_LOOKUP.findConstructor(AbstractMethodError.class, MethodType.methodType(void.class));
-						} catch (IllegalAccessException | NoSuchMethodException e) {
-							throw new InternalError("Unable to find AbstractMethodError.<init>()");  //$NON-NLS-1$
-						}
-						handle = foldArguments(thrower, constructor);
-						handle = dropArguments(handle, 0, type.parameterList());
-						
-						if (isVarargs(methodModifiers)) {
-							Class<?> lastClass = handle.type.lastParameterType();
-							handle = handle.asVarargsCollector(lastClass);
-						}
-						return handle;
-						/*[ELSE]
 						handle = new DirectHandle(method, MethodHandle.KIND_SPECIAL, declaringClass, true);
-						/*[ENDIF]*/
 					} else {
 						handle = new InterfaceHandle(method);
 					}

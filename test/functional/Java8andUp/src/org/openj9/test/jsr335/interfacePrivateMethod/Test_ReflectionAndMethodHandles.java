@@ -718,17 +718,8 @@ public class Test_ReflectionAndMethodHandles {
 		method.setAccessible(true);
 		Lookup lookup = getLookupObject(d);
 		MethodHandle mh = lookup.unreflect(method);
-		try {
-			String returnStatement = (String) mh.invoke(instance);
-			if (VersionCheck.major() < 9) {
-				Assert.fail("Should have thrown AbstractMethodError!!");
-			}
-		} catch (AbstractMethodError e) {
-			if (VersionCheck.major() >= 9) {
-				Assert.fail("private access should be allowed");				
-			}
-			/* Pass */
-		} 
+		String returnStatement = (String) mh.invoke(instance);
+		AssertJUnit.assertEquals("Failing as private non static method of interface ITest didnt return expected output", expected_ITest_private_non_static, returnStatement);
 	}
 	
 	/* --------------- Tests to test unreflectSpecial ---------------------- */
