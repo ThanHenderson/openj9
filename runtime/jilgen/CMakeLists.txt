@@ -26,23 +26,15 @@ if(OMR_OS_AIX)
 	set(CMAKE_INSTALL_RPATH .)
 endif()
 
-set(CMAKE_SKIP_BUILD_RPATH FALSE)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-set(CMAKE_INSTALL_RPATH ${jemalloc_SOURCE_DIR}/lib)
-
 j9vm_add_executable(constgen
 	jilconsts.c
 )
-
-add_dependencies(constgen jemalloc)
 
 target_link_libraries(constgen
 	PRIVATE
 		j9vm_interface
 		omrport
 		j9thr
-		"-Wl,--disable-new-dtags"
 )
 
 # Add command and target to generate jilconsts.inc/jilvalues.m4 via the constgen program.
