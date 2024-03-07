@@ -31,6 +31,11 @@
 
 set(OMR_ENHANCED_WARNINGS OFF)
 
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_INSTALL_RPATH ${jemalloc_SOURCE_DIR}/lib)
+
 add_tracegen(common/j9prt.tdf)
 j9vm_add_library(j9prt SHARED
 	OUTPUT_NAME j9prt${J9VM_VERSION_SUFFIX}
@@ -39,6 +44,8 @@ j9vm_add_library(j9prt SHARED
 	# Pull in the objects compiled as part of the OMR port library
 	$<TARGET_OBJECTS:omrport_obj>
 )
+
+add_dependencies(j9prt jemalloc)
 
 set(OBJECTS "")
 list(APPEND OBJECTS
@@ -157,6 +164,7 @@ target_link_libraries(j9prt
 		j9hashtable
 		j9thr
 		${CMAKE_DL_LIBS}
+		${jemalloc_LIB}
 )
 if(OMR_OS_WINDOWS)
 	target_link_libraries(j9prt
@@ -206,6 +214,7 @@ target_include_directories(j9prt
 		$<TARGET_PROPERTY:omrport_obj,INCLUDE_DIRECTORIES>
 		${CMAKE_CURRENT_BINARY_DIR}
 		${CMAKE_CURRENT_SOURCE_DIR}
+		${jemalloc_INCLUDE_DIR}
 )
 
 if(OMR_OS_LINUX)
