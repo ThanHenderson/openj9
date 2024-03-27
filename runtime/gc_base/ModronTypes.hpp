@@ -79,6 +79,7 @@ typedef GC_PoolIterator GC_JVMTIObjectTagTableListIterator;
 #endif /* J9VM_OPT_JVMTI */
 
 typedef GC_HashTableIterator GC_StringTableIterator;
+typedef GC_HashTableIterator GC_ResolvedMethodNameTableIterator;
 
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 typedef GC_SublistIterator GC_RememberedSetIterator;

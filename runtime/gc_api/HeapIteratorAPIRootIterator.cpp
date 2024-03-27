@@ -59,6 +59,11 @@ HeapIteratorAPI_RootIterator::scanAllSlots()
 			scanStringTable();
 		}
 	}
+	if (!_nurseryReferencesOnly && !_nurseryReferencesPossibly) {
+		if (_flags & SCAN_RESOLVED_METHOD_NAME_TABLE) {
+			scanResolvedMethodNameTable();
+		}
+	}
 
 #if defined(J9VM_GC_FINALIZATION)
 	if (_flags & SCAN_UNFINALIZABLE) {

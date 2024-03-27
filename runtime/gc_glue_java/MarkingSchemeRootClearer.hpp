@@ -71,6 +71,7 @@ public:
 	virtual void doJNIWeakGlobalReference(omrobjectptr_t *slotPtr);
 	virtual void doRememberedSetSlot(omrobjectptr_t *slotPtr, GC_RememberedSetSlotIterator *rememberedSetSlotIterator);
 	virtual void doStringTableSlot(omrobjectptr_t *slotPtr, GC_StringTableIterator *stringTableIterator);
+	virtual void doResolvedMethodNameTableSlot(omrobjectptr_t *slotPtr, GC_ResolvedMethodNameTableIterator *resolvedMethodNameTableIterator);
 	virtual void doStringCacheTableSlot(omrobjectptr_t *slotPtr);
 	virtual void doJVMTIObjectTagSlot(omrobjectptr_t *slotPtr, GC_JVMTIObjectTagTableIterator *objectTagTableIterator);
 	virtual void doFinalizableObject(omrobjectptr_t object);

@@ -52,6 +52,7 @@
 #include "PointerArrayIterator.hpp"
 #include "SegmentIterator.hpp"
 #include "StringTable.hpp"
+#include "ResolvedMethodNameTable.hpp"
 #include "UnfinalizedObjectList.hpp"
 #include "VMClassSlotIterator.hpp"
 #include "VMThreadListIterator.hpp"
@@ -140,6 +141,15 @@ MM_HeapRootScanner::doRememberedSetSlot(J9Object **slotPtr, GC_RememberedSetSlot
  */
 void
 MM_HeapRootScanner::doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator)
+{
+	doSlot(slotPtr);
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
+MM_HeapRootScanner::doResolvedMethodNameTableSlot(J9Object **slotPtr, GC_ResolvedMethodNameTableIterator *resolvedMethodNameTableIterator)
 {
 	doSlot(slotPtr);
 }
@@ -434,6 +444,33 @@ MM_HeapRootScanner::scanStringTable()
 		}
 	}
 	reportScanningEnded(RootScannerEntity_StringTable);
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
+MM_HeapRootScanner::scanResolvedMethodNameTable()
+{
+	reportScanningStarted(RootScannerEntity_ResolvedMethodNameTable);
+	RootScannerEntityReachability reachability;
+	
+	if (_extensions->collectStringConstants) {
+		reachability = RootScannerEntityReachability_Weak;
+	} else {
+		reachability = RootScannerEntityReachability_Strong;
+	}
+	setReachability(reachability);
+
+	MM_ResolvedMethodNameTable* resolvedMethodNameTable =
+	        MM_GCExtensions::getExtensions(_javaVM->omrVM)->getResolvedMethodNameTable();
+	GC_HashTableIterator resolvedMethodNameTableIterator(resolvedMethodNameTable->getTable());
+	J9Object** slot;
+
+	while ((slot = (J9Object**)resolvedMethodNameTableIterator.nextSlot()) != NULL) {
+		doResolvedMethodNameTableSlot(slot, NULL);
+	}
+	reportScanningEnded(RootScannerEntity_ResolvedMethodNameTable);
 }
 
 #if defined(J9VM_GC_FINALIZATION)

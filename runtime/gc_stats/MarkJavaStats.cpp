@@ -45,6 +45,9 @@ MM_MarkJavaStats::clear()
 	_stringConstantsCleared = 0;
 	_stringConstantsCandidates = 0;
 
+	_resolvedMethodNamesCleared = 0;
+	_resolvedMethodNamesCandidates = 0;
+
 	_monitorReferenceCleared = 0;
 	_monitorReferenceCandidates = 0;
 
@@ -72,6 +75,9 @@ MM_MarkJavaStats::merge(MM_MarkJavaStats* statsToMerge)
 
 	_stringConstantsCleared += statsToMerge->_stringConstantsCleared;
 	_stringConstantsCandidates += statsToMerge->_stringConstantsCandidates;
+
+	_resolvedMethodNamesCleared += statsToMerge->_resolvedMethodNamesCleared;
+	_resolvedMethodNamesCandidates += statsToMerge->_resolvedMethodNamesCandidates;
 
 	_monitorReferenceCleared += statsToMerge->_monitorReferenceCleared;
 	_monitorReferenceCandidates += statsToMerge->_monitorReferenceCandidates;

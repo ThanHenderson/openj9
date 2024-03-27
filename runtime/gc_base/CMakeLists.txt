@@ -45,6 +45,7 @@ set(gc_base_sources
 	ReferenceChainWalker.cpp
 	ReferenceObjectBuffer.cpp
 	ReferenceObjectList.cpp
+	ResolvedMethodNameTable.cpp
 	RootScanner.cpp
 	StackSlotValidator.cpp
 	StringTable.cpp

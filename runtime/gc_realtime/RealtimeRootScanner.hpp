@@ -74,6 +74,7 @@ public:
 
 #if defined(J9VM_GC_REALTIME) 
 	void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator);
+	void doResolvedMethodNameTableSlot(J9Object **slotPtr, GC_ResolvedMethodNameTableIterator *resolvedMethodNameTableIterator);
 	virtual void doStringCacheTableSlot(J9Object **slotPtr);
 #endif /* J9VM_GC_REALTIME */
 
@@ -102,6 +103,8 @@ public:
 
 	virtual void scanStringTable(MM_EnvironmentBase *env);
 
+	virtual void scanResolvedMethodNameTable(MM_EnvironmentBase *env);
+
 	MM_RealtimeRootScanner(MM_EnvironmentRealtime *env, MM_RealtimeGC *realtimeGC)
 		: MM_RootScanner(env)
 		, _realtimeGC(realtimeGC)
@@ -114,6 +117,7 @@ public:
 #if defined(J9VM_GC_REALTIME) 
 		/* String table should be clearable, not a hard root */
 		setStringTableAsRoot(false);
+		setResolvedMethodNameTableAsRoot(false);
 #endif /* defined(J9VM_GC_REALTIME) */
 	}
 };

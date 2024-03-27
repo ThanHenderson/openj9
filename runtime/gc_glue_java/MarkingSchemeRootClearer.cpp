@@ -417,6 +417,16 @@ MM_MarkingSchemeRootClearer::doStringTableSlot(omrobjectptr_t *slotPtr, GC_Strin
 	}
 }
 
+void
+MM_MarkingSchemeRootClearer::doResolvedMethodNameTableSlot(omrobjectptr_t *slotPtr, GC_ResolvedMethodNameTableIterator *resolvedMethodNameTableIterator)
+{
+	_env->getGCEnvironment()->_markJavaStats._resolvedMethodNamesCandidates += 1;
+	if (!_markingScheme->isMarked(*slotPtr)) {
+		_env->getGCEnvironment()->_markJavaStats._resolvedMethodNamesCleared += 1;
+		resolvedMethodNameTableIterator->removeSlot();
+	}
+}
+
 /**
  * @Clear the string table cache slot if the object is not marked
  */

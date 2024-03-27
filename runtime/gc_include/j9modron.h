@@ -131,6 +131,7 @@ typedef jvmtiIterationControl J9MODRON_REFERENCE_CHAIN_WALKER_CALLBACK(J9Object 
 #define J9GC_ROOT_TYPE_JVMTI_TAG_REF 21
 #define J9GC_ROOT_TYPE_OWNABLE_SYNCHRONIZER_OBJECT 22
 #define J9GC_ROOT_TYPE_CONTINUATION_OBJECT 23
+#define J9GC_ROOT_TYPE_RESOLVED_METHOD_NAME_TABLE 24
 
 #define J9GC_REFERENCE_TYPE_UNKNOWN -1 /**< reference to an object that fell through a default state in an iterator */
 #define J9GC_REFERENCE_TYPE_FIELD -2	/**< field reference to an object */

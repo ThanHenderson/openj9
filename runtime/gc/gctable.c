@@ -231,6 +231,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_createJavaLangString,
 	j9gc_createJavaLangStringWithUTFCache,
 	j9gc_internString,
+	j9gc_findResolvedMethodName,
+	j9gc_internResolvedMethodName,
 	j9gc_objaccess_jniGetPrimitiveArrayCritical,
 	j9gc_objaccess_jniReleasePrimitiveArrayCritical,
 	j9gc_objaccess_jniGetStringCritical,

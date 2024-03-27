@@ -1215,6 +1215,10 @@ public:
 		if (_stringTableAsRoot){
 			scanStringTable(env);
 		}
+
+		if (_resolvedMethodNameTableAsRoot){
+			scanResolvedMethodNameTable(env);
+		}
 	}
 
 	MM_GlobalMarkingSchemeRootMarker(MM_EnvironmentBase *env, MM_GlobalMarkingScheme *markingScheme)
@@ -1365,6 +1369,14 @@ private:
 		if (!_markingScheme->isMarked(*slotPtr)) {
 			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._stringConstantsCleared += 1;
 			stringTableIterator->removeSlot();
+		}
+	}
+
+	virtual void doResolvedMethodNameTableSlot(J9Object **slotPtr, GC_ResolvedMethodNameTableIterator *resolvedMethodNameTableIterator) {
+		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._resolvedMethodNamesCandidates += 1;
+		if (!_markingScheme->isMarked(*slotPtr)) {
+			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._resolvedMethodNamesCleared += 1;
+			resolvedMethodNameTableIterator->removeSlot();
 		}
 	}
 

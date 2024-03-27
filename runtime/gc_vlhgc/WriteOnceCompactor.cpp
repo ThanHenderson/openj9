@@ -1645,6 +1645,7 @@ public:
 #endif /* J9VM_GC_FINALIZATION */
 		scanJNIGlobalReferences(env);
 		scanStringTable(env);
+		scanResolvedMethodNameTable(env);
 		scanMonitorReferences(env);
 		scanJNIWeakGlobalReferences(env);
 #if defined(J9VM_OPT_JVMTI)

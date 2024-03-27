@@ -173,6 +173,10 @@ MM_RealtimeRootScanner::scanAtomicRoots(MM_EnvironmentRealtime *env)
 	if(_stringTableAsRoot && (!_nurseryReferencesOnly && !_nurseryReferencesPossibly)){
 		scanStringTable(env);
 	}
+
+	if(_resolvedMethodNameTableAsRoot && (!_nurseryReferencesOnly && !_nurseryReferencesPossibly)){
+		scanResolvedMethodNameTable(env);
+	}
 }
 
 void
@@ -182,6 +186,16 @@ MM_RealtimeRootScanner::doStringTableSlot(J9Object **slotPtr, GC_StringTableIter
 	if(!_markingScheme->isMarked(*slotPtr)) {
 		_env->getGCEnvironment()->_markJavaStats._stringConstantsCleared += 1;
 		stringTableIterator->removeSlot();
+	}
+}
+
+void
+MM_RealtimeRootScanner::doResolvedMethodNameTableSlot(J9Object **slotPtr, GC_ResolvedMethodNameTableIterator *resolvedMethodNameTableIterator)
+{
+	_env->getGCEnvironment()->_markJavaStats._resolvedMethodNamesCandidates += 1;
+	if(!_markingScheme->isMarked(*slotPtr)) {
+		_env->getGCEnvironment()->_markJavaStats._resolvedMethodNamesCleared += 1;
+		resolvedMethodNameTableIterator->removeSlot();
 	}
 }
 
@@ -316,4 +330,17 @@ MM_RealtimeRootScanner::scanStringTable(MM_EnvironmentBase *env)
 		env->_currentTask->releaseSynchronizedGCThreads(env);
 	}
 	MM_RootScanner::scanStringTable(env);
+}
+
+void
+MM_RealtimeRootScanner::scanResolvedMethodNameTable(MM_EnvironmentBase *env)
+{
+	if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
+		/* We can't rely on using _unmarkedImpliesCleared because clearable phase can mark more objects.
+		 * Only at this point can we assume unmarked strings are truly dead.
+		 */
+		_realtimeGC->getRealtimeDelegate()->_unmarkedImpliesResolvedMethodNamesCleared = true;
+		env->_currentTask->releaseSynchronizedGCThreads(env);
+	}
+	MM_RootScanner::scanResolvedMethodNameTable(env);
 }

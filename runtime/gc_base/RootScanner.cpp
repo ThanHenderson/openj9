@@ -64,6 +64,7 @@
 #include "SlotObject.hpp"
 #include "StringTable.hpp"
 #include "StringTableIncrementalIterator.hpp"
+#include "ResolvedMethodNameTable.hpp"
 #include "Task.hpp"
 #include "UnfinalizedObjectList.hpp"
 #include "VMClassSlotIterator.hpp"
@@ -238,6 +239,15 @@ MM_RootScanner::doRememberedSetSlot(J9Object **slotPtr, GC_RememberedSetSlotIter
  */
 void
 MM_RootScanner::doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator)
+{
+	doSlot(slotPtr);
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
+MM_RootScanner::doResolvedMethodNameTableSlot(J9Object **slotPtr, GC_ResolvedMethodNameTableIterator *resolvedMethodNameTableIterator)
 {
 	doSlot(slotPtr);
 }
@@ -679,6 +689,23 @@ MM_RootScanner::scanStringTable(MM_EnvironmentBase *env)
 	}
 
 	reportScanningEnded(RootScannerEntity_StringTable);
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
+MM_RootScanner::scanResolvedMethodNameTable(MM_EnvironmentBase *env)
+{
+	MM_ResolvedMethodNameTable *resolvedMethodNameTable = _extensions->getResolvedMethodNameTable();
+	reportScanningStarted(RootScannerEntity_ResolvedMethodNameTable);
+	GC_ResolvedMethodNameTableIterator resolvedMethodNameTableIterator(resolvedMethodNameTable->getTable());
+	J9Object** slot = NULL;
+	while (NULL != (slot = (J9Object**)resolvedMethodNameTableIterator.nextSlot())) {
+		doResolvedMethodNameTableSlot(slot, &resolvedMethodNameTableIterator);
+	}
+
+	reportScanningEnded(RootScannerEntity_ResolvedMethodNameTable);
 }
 
 /**

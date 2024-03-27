@@ -71,6 +71,9 @@ public:
 	uintptr_t _stringConstantsCleared;  /**< The number of string constants that have been cleared during marking */
 	uintptr_t _stringConstantsCandidates; /**< The number of string constants that have been visited in string table during marking */
 
+	uintptr_t _resolvedMethodNamesCleared;  /**< The number of string constants that have been cleared during marking */
+	uintptr_t _resolvedMethodNamesCandidates; /**< The number of string constants that have been visited in string table during marking */
+
 	uintptr_t _monitorReferenceCleared; /**< The number of monitor references that have been cleared during marking */
 	uintptr_t _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during marking */
 

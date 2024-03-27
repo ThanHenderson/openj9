@@ -4627,6 +4627,8 @@ typedef struct J9MemoryManagerFunctions {
 	j9object_t  ( *j9gc_createJavaLangString)(struct J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags) ;
 	j9object_t  ( *j9gc_createJavaLangStringWithUTFCache)(struct J9VMThread *vmThread, struct J9UTF8 *utf) ;
 	j9object_t  ( *j9gc_internString)(struct J9VMThread *vmThread, j9object_t sourceString) ;
+	j9object_t  ( *j9gc_findResolvedMethodName)(struct J9VMThread *vmThread, const J9UTF8 *className, const J9NameAndSignature *nameAndSignature) ;
+	j9object_t  ( *j9gc_internResolvedMethodName)(struct J9VMThread *vmThread, const J9UTF8 *className, const J9NameAndSignature *nameAndSig, j9object_t method) ;
 	void*  ( *j9gc_objaccess_jniGetPrimitiveArrayCritical)(struct J9VMThread* vmThread, jarray array, jboolean *isCopy) ;
 	void  ( *j9gc_objaccess_jniReleasePrimitiveArrayCritical)(struct J9VMThread* vmThread, jarray array, void * elems, jint mode) ;
 	const jchar*  ( *j9gc_objaccess_jniGetStringCritical)(struct J9VMThread* vmThread, jstring str, jboolean *isCopy) ;
@@ -5970,6 +5972,7 @@ typedef struct J9JavaVM {
 #ifdef J9VM_OPT_OPENJDK_METHODHANDLE
 	UDATA vmindexOffset;
 	UDATA vmtargetOffset;
+	UDATA vmtargetOffsetForResolvedMethodName;
 	UDATA mutableCallSiteInvalidationCookieOffset;
 	UDATA jitVMEntryKeepAliveOffset;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */

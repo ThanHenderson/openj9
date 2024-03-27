@@ -630,6 +630,15 @@ MM_ReferenceChainWalker::doStringTableSlot(J9Object **slotPtr, GC_StringTableIte
  * @todo Provide function documentation
  */
 void
+MM_ReferenceChainWalker::doResolvedMethodNameTableSlot(J9Object **slotPtr, GC_ResolvedMethodNameTableIterator *resolvedMethodNameTableIterator)
+{
+	doSlot(slotPtr, J9GC_ROOT_TYPE_RESOLVED_METHOD_NAME_TABLE, -1, NULL);
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
 MM_ReferenceChainWalker::doVMClassSlot(J9Class *classPtr)
 {
 	doClassSlot(classPtr, J9GC_ROOT_TYPE_VM_CLASS_SLOT, -1, NULL);

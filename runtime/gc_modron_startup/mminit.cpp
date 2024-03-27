@@ -103,6 +103,7 @@
 #endif /* J9VM_GC_REALTIME */
 #include "Scavenger.hpp"
 #include "StringTable.hpp"
+#include "ResolvedMethodNameTable.hpp"
 #include "Validator.hpp"
 #if defined(OMR_GC_IDLE_HEAP_MANAGER)
 #include "IdleGCManager.hpp"
@@ -505,6 +506,11 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 
 	extensions->stringTable = MM_StringTable::newInstance(&env, extensions->dispatcher->threadCountMaximum());
 	if (NULL == extensions->stringTable) {
+		goto error_no_memory;
+	}
+
+	extensions->resolvedMethodNameTable = MM_ResolvedMethodNameTable::newInstance(&env);
+	if (NULL == extensions->resolvedMethodNameTable) {
 		goto error_no_memory;
 	}
 

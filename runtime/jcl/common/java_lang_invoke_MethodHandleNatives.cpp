@@ -517,6 +517,7 @@ lookupMethod(J9VMThread *currentThread, J9Class *resolvedClass, J9UTF8 *name, J9
 	J9Method *result = NULL;
 	J9NameAndSignature nas;
 	J9UTF8 nullSignature = {0};
+	J9JavaVM *vm = currentThread->javaVM;
 
 	nas.name = name;
 	nas.signature = signature;
@@ -529,8 +530,19 @@ lookupMethod(J9VMThread *currentThread, J9Class *resolvedClass, J9UTF8 *name, J9
 		lookupOptions |= J9_LOOK_PARTIAL_SIGNATURE;
 	}
 
-	result = (J9Method*)currentThread->javaVM->internalVMFunctions->javaLookupMethod(currentThread, resolvedClass, (J9ROMNameAndSignature*)&nas, callerClass, lookupOptions);
-
+	// check intern cache
+	J9UTF8 *resolvedClassName = J9ROMCLASS_CLASSNAME(resolvedClass->romClass);
+	j9object_t internedResolvedMethodName = vm->memoryManagerFunctions->j9gc_findResolvedMethodName(currentThread, resolvedClassName, (J9NameAndSignature *)&nas);
+	if (NULL != internedResolvedMethodName) {
+		// fprintf(stderr, "Found interned method name: %p romclass: %p name: %s sig: %s\n", internedResolvedMethodName, resolvedClass->romClass, J9UTF8_DATA(name), J9UTF8_DATA(signature));
+		result = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, internedResolvedMethodName, vm->vmtargetOffsetForResolvedMethodName);
+	} else {
+		result = (J9Method *)vm->internalVMFunctions->javaLookupMethod(currentThread, resolvedClass, (J9ROMNameAndSignature *)&nas, callerClass, lookupOptions);
+		if (NULL != result) {
+			vm->memoryManagerFunctions->j9gc_internResolvedMethodName(
+			        currentThread, resolvedClassName, (J9NameAndSignature*)&nas, (j9object_t)result);
+		}
+	}
 	return result;
 }
 
@@ -744,6 +756,9 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 	jobject result = NULL;
 	J9UTF8 *name = NULL;
 	J9UTF8 *signature = NULL;
+	// const NBuff = 256;
+	// char nameBuffer[NBuff];
+	// char signatureBuffer[NBuff];
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -909,6 +924,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 						goto done;
 					}
 				} else if (NULL != method) {
+					fprintf(stderr, "Method: %p\n", method);
 					J9JNIMethodID *methodID = vmFuncs->getJNIMethodID(currentThread, method);
 					target = (jlong)(UDATA)method;
 
@@ -973,7 +989,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 					J9Class *newJ9Clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, new_clazz);
 					vmindex = vmindexValueForMethodMemberName(methodID, newJ9Clazz, new_flags);
 				}
-			} if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
+			} else if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
 				J9Class *declaringClass;
 				J9ROMFieldShape *romField;
 				UDATA lookupOptions = 0;
@@ -1094,9 +1110,9 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 				J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmindexOffset, (U_64)vmindex);
 				J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmtargetOffset, (U_64)target);
 
-				Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_resolved(env, vmindex, target, new_clazz, new_flags);
 
 				result = vmFuncs->j9jni_createLocalRef(env, membernameObject);
+				Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_resolved(env, vmindex, target, new_clazz, new_flags, result, membernameObject);
 			}
 
 			if ((NULL == result)
@@ -1117,8 +1133,11 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 	}
 
 done:
-	j9mem_free_memory(name);
-	j9mem_free_memory(signature);
+// Name and signature are stored in the interned ResolvedMemberNameEntry so don't free here
+	// if (name != nameBuffer)
+		j9mem_free_memory(name);
+	// if (name != signatureBuffer)
+		j9mem_free_memory(signature);
 #if JAVA_SPEC_VERSION >= 11
 	if ((JNI_TRUE == speculativeResolve) && VM_VMHelpers::exceptionPending(currentThread)) {
 		VM_VMHelpers::clearException(currentThread);

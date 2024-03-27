@@ -80,6 +80,7 @@ protected:
 	OMR_VM *_omrVM;
 
 	bool _stringTableAsRoot;  /**< Treat the string table as a hard root */
+	bool _resolvedMethodNameTableAsRoot;  /**< Treat the ResolvedMethodName table as a hard root */
 	bool _jniWeakGlobalReferencesTableAsRoot;	/**< Treat JNI Weak References Table as a hard root */
 	bool _singleThread;  /**< Should the iterator operate in single threaded mode */
 
@@ -306,6 +307,7 @@ public:
 		, _clij((MM_CollectorLanguageInterfaceImpl *)_extensions->collectorLanguageInterface)
 		, _omrVM(env->getOmrVM())
 		, _stringTableAsRoot(true)
+		, _resolvedMethodNameTableAsRoot(true)
 		, _jniWeakGlobalReferencesTableAsRoot(false)
 		, _singleThread(singleThread)
 		, _nurseryReferencesOnly(false)
@@ -344,6 +346,11 @@ public:
 	/** Set whether the string table should be treated as a hard root or not */
 	void setStringTableAsRoot(bool stringTableAsRoot) {
 		_stringTableAsRoot = stringTableAsRoot;
+	}
+
+	/** Set whether the ResolveMethodName table should be treated as a hard root or not */
+	void setResolvedMethodNameTableAsRoot(bool resolvedMethodNameTableAsRoot) {
+		_resolvedMethodNameTableAsRoot = resolvedMethodNameTableAsRoot;
 	}
 
 #if defined(J9VM_GC_MODRON_SCAVENGER)
@@ -456,6 +463,7 @@ public:
 	virtual void iterateAllContinuationObjects(MM_EnvironmentBase *env) {}
 
 	virtual void scanStringTable(MM_EnvironmentBase *env);
+	virtual void scanResolvedMethodNameTable(MM_EnvironmentBase *env);
 	void scanJNIGlobalReferences(MM_EnvironmentBase *env);
 	virtual void scanJNIWeakGlobalReferences(MM_EnvironmentBase *env);
 
@@ -532,6 +540,7 @@ public:
 #endif /* J9VM_OPT_JVMTI */
 
 	virtual void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator);
+	virtual void doResolvedMethodNameTableSlot(J9Object **slotPtr, GC_ResolvedMethodNameTableIterator *resolvedMethodNameTableIterator);
 	virtual void doStringCacheTableSlot(J9Object **slotPtr);
 	virtual void doVMClassSlot(J9Class *classPtr);
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator);

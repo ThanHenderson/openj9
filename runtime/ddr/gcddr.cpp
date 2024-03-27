@@ -36,6 +36,7 @@
 #include "RealtimeMarkingScheme.hpp"
 #include "ScavengerForwardedHeader.hpp"
 #include "StringTable.hpp"
+#include "ResolvedMethodNameTable.hpp"
 #include "SweepPoolManager.hpp"
 
 #if defined(J9VM_GC_FINALIZATION)
@@ -71,6 +72,7 @@ GC_DdrDebugLink(MM_MemoryPoolSplitAddressOrderedList)
 GC_DdrDebugLink(MM_RealtimeMarkingScheme)
 GC_DdrDebugLink(MM_ScavengerForwardedHeader)
 GC_DdrDebugLink(MM_StringTable)
+GC_DdrDebugLink(MM_ResolvedMethodNameTable)
 
 #if defined(J9VM_GC_FINALIZATION)
 GC_DdrDebugLink(GC_FinalizeListManager)

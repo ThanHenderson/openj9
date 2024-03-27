@@ -635,6 +635,10 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 		return 1;
 	}
 
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/invoke/ResolvedMethodName", "vmtarget", "J", &vm->vmtargetOffsetForResolvedMethodName)) {
+		return 1;
+	}
+
 	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/invoke/MutableCallSite", "invalidationCookie", "J", &vm->mutableCallSiteInvalidationCookieOffset)) {
 		return 1;
 	}

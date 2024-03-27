@@ -120,6 +120,7 @@ private:
 
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator);
 	virtual void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator);
+	virtual void doResolvedMethodNameTableSlot(J9Object **slotPtr, GC_ResolvedMethodNameTableIterator *resolvedMethodNameTableIterator);
 	virtual void doVMClassSlot(J9Class *classPtr);
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator);
 	virtual void doStackSlot(J9Object **slotPtr, void *walkState, const void* stackLocation);

@@ -40,6 +40,7 @@ protected:
 	J9JavaVM *_javaVM;
 
 	bool _stringTableAsRoot;  /**< Treat the string table as a hard root */
+	bool _resolvedMethodNameTableAsRoot;  /**< Treat the string table as a hard root */
 	bool _singleThread;  /**< Should the iterator operate in single threaded mode */
 
 	bool _nurseryReferencesOnly;  /**< Should the iterator only scan structures that currently contain nursery references */
@@ -101,6 +102,7 @@ public:
 		_extensions(MM_GCExtensions::getExtensions(javaVM)),
 		_javaVM(javaVM),
 		_stringTableAsRoot(true),
+		_resolvedMethodNameTableAsRoot(true),
 		_singleThread(singleThread),
 		_nurseryReferencesOnly(false),
 		_nurseryReferencesPossibly(false),
@@ -191,6 +193,7 @@ public:
 	virtual void scanOwnableSynchronizerObjects();
 	virtual void scanContinuationObjects();
 	void scanStringTable();
+	void scanResolvedMethodNameTable();
 	void scanJNIGlobalReferences();
 	void scanJNIWeakGlobalReferences();
 
@@ -226,6 +229,7 @@ public:
 #endif /* J9VM_OPT_JVMTI */
 
 	virtual void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator);
+	virtual void doResolvedMethodNameTableSlot(J9Object **slotPtr, GC_ResolvedMethodNameTableIterator *resilvedMethodNameTableIterator);
 	virtual void doVMClassSlot(J9Class *classPtr);
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator);
 };

@@ -290,6 +290,10 @@ extern J9_CFUNC j9object_t j9gc_internString(J9VMThread *vmThread, j9object_t so
 extern UDATA j9gc_stringHashFn (void *key, void *userData);
 extern BOOLEAN j9gc_stringHashEqualFn (void *leftKey, void *rightKey, void *userData);
 
+/* ResolvedMethodNameTable.cpp */
+extern J9_CFUNC j9object_t j9gc_findResolvedMethodName(J9VMThread *vmThread, const J9UTF8 *className, const J9NameAndSignature *nameAndSig);
+extern J9_CFUNC j9object_t j9gc_internResolvedMethodName(J9VMThread *vmThread, const J9UTF8 *className, const J9NameAndSignature *nameAndSig, const j9object_t method);
+
 /* modronapi.cpp */
 extern J9_CFUNC UDATA j9gc_get_bytes_allocated_by_thread(J9VMThread* vmThread);
 extern J9_CFUNC BOOLEAN j9gc_get_cumulative_bytes_allocated_by_thread(J9VMThread *vmThread, UDATA *cumulativeValue);

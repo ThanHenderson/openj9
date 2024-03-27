@@ -59,6 +59,7 @@ class MM_ObjectAccessBarrier;
 class MM_OwnableSynchronizerObjectList;
 class MM_ContinuationObjectList;
 class MM_StringTable;
+class MM_ResolvedMethodNameTable;
 class MM_UnfinalizedObjectList;
 class MM_Wildcard;
 
@@ -91,6 +92,7 @@ private:
 	MM_ContinuationObjectList* continuationObjectLists; /**< The global linked list of continuation object lists. */
 public:
 	MM_StringTable* stringTable; /**< top level String Table structure (internally organized as a set of hash sub-tables */
+	MM_ResolvedMethodNameTable* resolvedMethodNameTable;
 
 	void* gcchkExtensions;
 
@@ -105,6 +107,7 @@ public:
 	MM_HookInterface hookInterface;
 
 	bool collectStringConstants;
+	bool collectResolvedMethodNames;
 
 	MM_MarkJavaStats markJavaStats;
 #if defined(J9VM_GC_MODRON_SCAVENGER)
@@ -264,6 +267,12 @@ public:
 	 */
 	MMINLINE MM_StringTable* getStringTable() { return stringTable; }
 
+	/**
+	 * Fetch the global MemberName table instance.
+	 * @return The MemberName table.
+	 */
+	MMINLINE MM_ResolvedMethodNameTable* getResolvedMethodNameTable() { return resolvedMethodNameTable; }
+
 	MMINLINE uintptr_t getDynamicMaxSoftReferenceAge()
 	{
 		return dynamicMaxSoftReferenceAge;
@@ -388,6 +397,7 @@ public:
 		, ownableSynchronizerObjectLists(NULL)
 		, continuationObjectLists(NULL)
 		, stringTable(NULL)
+		, resolvedMethodNameTable(NULL)
 		, gcchkExtensions(NULL)
 		, tgcExtensions(NULL)
 #if defined(J9VM_GC_FINALIZATION)

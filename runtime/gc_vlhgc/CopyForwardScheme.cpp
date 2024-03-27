@@ -3900,6 +3900,10 @@ public:
 		if (_stringTableAsRoot){
 			scanStringTable(env);
 		}
+
+		if (_resolvedMethodNameTableAsRoot){
+			scanResolvedMethodNameTable(env);
+		}
 	}
 };
 
@@ -4064,6 +4068,23 @@ private:
 				Assert_MM_mustBeClass(_extensions->objectModel.getPreservedClass(&forwardedHeader));
 				MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._stringConstantsCleared += 1;
 				stringTableIterator->removeSlot();
+			} else {
+				*slotPtr = objectPtr;
+			}
+		}
+	}
+
+	virtual void doResolvedMethodNameTableSlot(J9Object **slotPtr, GC_ResolvedMethodNameTableIterator *resolvedMethodNameTableIterator) {
+		J9Object *objectPtr = *slotPtr;
+		MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._resolvedMethodNamesCandidates += 1;
+		if (!_copyForwardScheme->isLiveObject(objectPtr)) {
+			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
+			MM_ForwardedHeader forwardedHeader(objectPtr, _extensions->compressObjectReferences());
+			objectPtr = forwardedHeader.getForwardedObject();
+			if (NULL == objectPtr) {
+				Assert_MM_mustBeClass(_extensions->objectModel.getPreservedClass(&forwardedHeader));
+				MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._resolvedMethodNamesCleared += 1;
+				resolvedMethodNameTableIterator->removeSlot();
 			} else {
 				*slotPtr = objectPtr;
 			}

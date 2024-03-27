@@ -107,6 +107,7 @@
 #include "StandardAccessBarrier.hpp"
 #include "SublistFragment.hpp"
 #include "StringTable.hpp"
+// #include "ResolvedMethodNameTable.hpp"
 #include "Task.hpp"
 #include "UnfinalizedObjectBuffer.hpp"
 #include "WorkPacketsConcurrent.hpp"
@@ -381,6 +382,10 @@ MM_ScavengerDelegate::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr
 
 	GC_ObjectScanner *objectScanner = NULL;
 	J9Class *clazzPtr = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
+	// fprintf(stderr, "scavenger delegate object pointer is %p\n", objectPtr);
+	// fprintf(stderr, "scavenger delegate clazz pointer is %p\n", clazzPtr);
+	// fprintf(stderr, "scavenger delegate clazz pointer scan type is %d\n", _extensions->objectModel.getScanType(clazzPtr));
+	// fprintf(stderr, "scavenger delegate rom clazz pointer is %p\n", clazzPtr->romClass);
 
 	switch(_extensions->objectModel.getScanType(clazzPtr)) {
 	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
