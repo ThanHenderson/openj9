@@ -226,6 +226,9 @@ if(J9VM_OPT_METHOD_HANDLE)
 		MHInterpreterCompressed.cpp
 		MHInterpreterFull.cpp
 	)
+	list(APPEND main_sources
+		MemberNameCache.cpp
+	)
 endif()
 
 j9vm_add_library(j9vm SHARED

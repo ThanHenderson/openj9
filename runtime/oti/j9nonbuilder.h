@@ -3263,6 +3263,11 @@ typedef struct J9MemberNameListNode {
 	jobject memberName;
 	struct J9MemberNameListNode *next;
 } J9MemberNameListNode;
+
+typedef struct MemberNameCache {
+	J9HashTable* _table;
+	omrthread_monitor_t _mutex; /**< hash-table mutex */
+} MemberNameCache;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 typedef struct J9Class {
@@ -3331,6 +3336,7 @@ typedef struct J9Class {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	/* A linked list of weak global references to every resolved MemberName whose clazz is this class. */
 	J9MemberNameListNode *memberNames;
+	MemberNameCache *memberNameCache;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 } J9Class;
 
@@ -3427,6 +3433,7 @@ typedef struct J9ArrayClass {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	/* A linked list of weak global references to every resolved MemberName whose clazz is this class. */
 	J9MemberNameListNode *memberNames;
+	MemberNameCache *memberNameCache;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 } J9ArrayClass;
 

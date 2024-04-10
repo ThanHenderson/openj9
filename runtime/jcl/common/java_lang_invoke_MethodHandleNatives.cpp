@@ -37,6 +37,7 @@
 #include <assert.h>
 
 #include "VMHelpers.hpp"
+#include "MemberNameCache.hpp"
 
 extern "C" {
 
@@ -81,6 +82,53 @@ isPolymorphicMHMethod(J9JavaVM *vm, J9Class *declaringClass, J9UTF8 *methodName)
 	}
 
 	return false;
+}
+
+jobject
+internMemberName(
+        J9VMThread *vmThread,
+        j9object_t clazzObject,
+        const J9UTF8 *name,
+        const J9UTF8 *signature,
+        j9object_t memberName)
+{
+	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, clazzObject);
+	jobject internedMemberName = NULL;
+	MemberNameCache *memberNameCache = clazz->memberNameCache;
+	if (NULL == memberNameCache) {
+		memberNameCache = MemberNameCache::newInstance(vmThread);
+		clazz->memberNameCache = memberNameCache;
+	}
+	if (NULL != memberNameCache) {
+		J9NameAndSignature nameAndSig;
+		nameAndSig.name = const_cast<J9UTF8 *>(name);
+		nameAndSig.signature = const_cast<J9UTF8 *>(signature);
+		jobject internedMemberName = memberNameCache->find(vmThread, nameAndSig);
+		if (NULL == internedMemberName) {
+			internedMemberName = memberNameCache->intern(vmThread, nameAndSig, memberName);
+		}
+	}
+
+	return internedMemberName;
+}
+
+jobject
+findMemberName(J9VMThread *vmThread, J9Class *clazz, const J9UTF8 *name, const J9UTF8 *signature)
+{
+	jobject internedMemberName = NULL;
+	MemberNameCache *memberNameCache = clazz->memberNameCache;
+	if (NULL == memberNameCache) {
+		memberNameCache = MemberNameCache::newInstance(vmThread);
+		clazz->memberNameCache = memberNameCache;
+	}
+	if (NULL != memberNameCache) {
+		J9NameAndSignature nameAndSig;
+		nameAndSig.name = const_cast<J9UTF8 *>(name);
+		nameAndSig.signature = const_cast<J9UTF8 *>(signature);
+		internedMemberName = memberNameCache->find(vmThread, nameAndSig);
+	}
+
+	return internedMemberName;
 }
 
 /**
@@ -953,6 +1001,12 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 						break;
 				}
 
+				/* Check MemberNameCache for an interned member name. */
+				result = findMemberName(currentThread, resolvedClass, name, signature);
+				if (NULL != result) {
+					goto done;
+				}
+
 				/* Check if signature polymorphic native calls */
 				J9Method *method = lookupMethod(currentThread, resolvedClass, name, signature, callerClass, lookupOptions);
 
@@ -1173,7 +1227,11 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 
 					Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_resolved(env, vmindex, target, new_clazz, new_flags);
 
-					result = vmFuncs->j9jni_createLocalRef(env, membernameObject);
+					/* Intern member name in the MemberNameCache. */
+					result = internMemberName(currentThread, new_clazz, name, signature, membernameObject);
+					if (NULL == result) {
+						result = vmFuncs->j9jni_createLocalRef(env, membernameObject);
+					}
 				}
 			}
 

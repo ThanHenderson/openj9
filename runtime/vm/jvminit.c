@@ -8160,6 +8160,12 @@ freeClassNativeMemory(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 	}
 
 	omrthread_monitor_exit(vm->memberNameListsMutex);
+
+	// /* Free the MemberName cache. */
+	// if (NULL != clazz->memberNameCache) {
+	// 	clazz->memberNameCache->kill(currentThread);
+	// }
+
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 }
 
