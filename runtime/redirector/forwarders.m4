@@ -271,7 +271,7 @@ _X(JVM_GetFieldAnnotations,JNICALL,true,jobject,jint arg0, jint arg1)
 _X(JVM_GetMethodAnnotations,JNICALL,true,jobject,jint arg0, jint arg1)
 _X(JVM_GetMethodDefaultAnnotationValue,JNICALL,true,jobject,jint arg0, jint arg1)
 _X(JVM_GetMethodParameterAnnotations,JNICALL,true,jobject,jint arg0, jint arg1)
-_X(JVM_GetClassTypeAnnotations,JNICALL,true,jbyteArray,JNIEnv *env, jobject cls)
+_X(JVM_GetClassTypeAnnotations,JNICALL,true,jbyteArray,JNIEnv *env, jclass cls)
 _X(JVM_GetFieldTypeAnnotations,JNICALL,true,jbyteArray,JNIEnv *env, jobject field)
 _X(JVM_GetMethodParameters,JNICALL,true,jobjectArray,JNIEnv *env, jobject method)
 _X(JVM_GetMethodTypeAnnotations,JNICALL,true,jbyteArray,JNIEnv *env, jobject method)
@@ -397,9 +397,9 @@ _IF([JAVA_SPEC_VERSION >= 19],
 _IF([JAVA_SPEC_VERSION >= 19],
 	[_X(JVM_RegisterContinuationMethods, JNICALL, false, void, JNIEnv *env, jclass clz)])
 _IF([JAVA_SPEC_VERSION >= 19],
-	[_X(JVM_IsContinuationsSupported, JNICALL, false, void, void)])
+	[_X(JVM_IsContinuationsSupported, JNICALL, false, jboolean, void)])
 _IF([JAVA_SPEC_VERSION >= 19],
-	[_X(JVM_IsPreviewEnabled, JNICALL, false, void, void)])
+	[_X(JVM_IsPreviewEnabled, JNICALL, false, jboolean, void)])
 _IF([(19 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 21)],
 	[_X(JVM_VirtualThreadMountBegin, JNICALL, false, void, JNIEnv *env, jobject thread, jboolean firstMount)])
 _IF([(19 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 21)],

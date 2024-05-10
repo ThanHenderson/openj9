@@ -104,26 +104,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		</makefilestubs>
 		<objects>
 			<object name="asgct"/>
-			<object name="j8vmi"/>
-			<object name="j7vmi"/>
 			<object name="j7verify"/>
 			<object name="jvm"/>
 			<object name="vmi"/>
 			<object name="ut_j9scar"/>
 			<object name="j9memcategories"/>
-			<object name="java11vmi">
-				<!--
-				This object is mis-named and should have been separated into additions
-				for 9, 10 and 11. As Java 9 and 10 are out-of-service at this point it
-				isn't worth fixing.
-				-->
-				<!-- TODO include this object conditionally
-				<include-if condition="spec.java9"/>
-				-->
-			</object>
-			<object name="javanextvmi">
-				<include-if condition="spec.java11"/>
-			</object>
 		</objects>
 
 		<!--
