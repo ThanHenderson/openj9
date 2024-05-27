@@ -87,69 +87,6 @@ getOpenJ9Sha()
 	return sha;
 }
 
-#if JAVA_SPEC_VERSION < 21
-char*
-getLastDollarSignOfLambdaClassName(const char *className, UDATA classNameLength)
-{
-	char *end = NULL;
-
-	if ((NULL == className) || (0 == classNameLength)) {
-		return NULL;
-	}
-
-	/* Get the pointer to the last '$' sign */
-	end = strnrchrHelper(className, '$', classNameLength);
-
-	if ((NULL != end) && ((end - 8) - className > 0)) {
-		if (0 == memcmp(end - 8, "$$Lambda", sizeof("$$Lambda") - 1)) {
-			/* Check if $$Lambda exists in the class name right before the last '$' sign */
-			return end;
-		}
-	}
-
-	/* return NULL if it is not a lambda class */
-	return NULL;
-}
-#endif /* JAVA_SPEC_VERSION < 21 */
-
-BOOLEAN
-isLambdaClassName(const char *className, UDATA classNameLength)
-{
-	BOOLEAN result = FALSE;
-
-#if JAVA_SPEC_VERSION < 21
-	/*
-	 * Before JDK21, Lambda class names are in the format:
-	 *	HostClassName$$Lambda$<IndexNumber>/<zeroed out ROM_ADDRESS>
-	 * getLastDollarSignOfLambdaClassName verifies this format and returns
-	 * a non-NULL pointer if successfully verified.
-	 */
-	char *isValid = getLastDollarSignOfLambdaClassName(className, classNameLength);
-	if (NULL != isValid) {
-		result = TRUE;
-	}
-#else /* JAVA_SPEC_VERSION < 21 */
-	/*
-	 * For JDK21 and later, Lambda class names are in the format:
-	 *	HostClassName$$Lambda/<zeroed out ROM_ADDRESS>
-	 * Verifies format by identifiying last occurence of '$' and checking for the
-	 * Lambda suffix.
-	 */
-#if defined(J9VM_ENV_DATA64)
-#define J9_LAMBDA_CLASS_SUFFIX "$$Lambda/0x0000000000000000"
-#else /* defined(J9VM_ENV_DATA64) */
-#define J9_LAMBDA_CLASS_SUFFIX "$$Lambda/0x00000000"
-#endif /* defined(J9VM_ENV_DATA64) */
-	UDATA lambdaSuffixLength = LITERAL_STRLEN(J9_LAMBDA_CLASS_SUFFIX);
-	if (isStrSuffixHelper(className, classNameLength, J9_LAMBDA_CLASS_SUFFIX, lambdaSuffixLength)) {
-		result = TRUE;
-	}
-#undef J9_LAMBDA_CLASSNAME_SUFFIX
-#endif /* JAVA_SPEC_VERSION < 21 */
-
-	return result;
-}
-
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 BOOLEAN
 isLambdaFormClassName(const char *className, UDATA classNameLength)

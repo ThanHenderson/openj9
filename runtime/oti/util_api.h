@@ -2459,30 +2459,6 @@ getJVMFeature(J9JavaVM *vm);
 uint64_t
 getOpenJ9Sha();
 
-#if JAVA_SPEC_VERSION < 21
-/**
- * If the class is a lambda class get the pointer to the last '$' sign of the class name which is in the format of HostClassName$$Lambda$<IndexNumber>/0x0000000000000000.
- * NULL otherwise.
- *
- * @param[in] className  pointer to the class name
- * @param[in] classNameLength  length of the class name
- * @return Pointer to the last '$' sign of the class name if it is a lambda class.
- * 		   NULL otherwise.
- */
-char*
-getLastDollarSignOfLambdaClassName(const char *className, UDATA classNameLength);
-#endif /*JAVA_SPEC_VERSION < 21 */
-
-/**
- * Checks if the given class name corresponds to a Lambda class.
- *
- * @param className The class name to check
- * @param classNameLength The length of the class name
- * @return TRUE if the class name corresponds to a lambda class, otherwise FALSE
- */
-BOOLEAN
-isLambdaClassName(const char *className, UDATA classNameLength);
-
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 /**
  * Checks if the given class name corresponds to a LambdaForm class.
