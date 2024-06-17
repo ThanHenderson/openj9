@@ -139,6 +139,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<classref name="java/lang/invoke/VarHandle" versions="9-" flags="opt_methodHandleCommon"/>
 
 	<!-- Class references needed to support OpenJDK MethodHandles. -->
+	<classref name="java/lang/invoke/ResolvedMethodName" flags="opt_openjdkMethodhandle"/>
 	<classref name="java/lang/invoke/MemberName" flags="opt_openjdkMethodhandle"/>
 	<classref name="java/lang/invoke/MethodTypeForm" flags="opt_openjdkMethodhandle"/>
 	<classref name="java/lang/invoke/LambdaForm" flags="opt_openjdkMethodhandle"/>
@@ -411,6 +412,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<fieldref class="java/lang/invoke/MemberName" name="name" signature="Ljava/lang/String;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MemberName" name="type" signature="Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MemberName" name="flags" signature="I" flags="opt_openjdkMethodhandle"/>
+	<fieldref class="java/lang/invoke/MemberName" name="method" signature="Ljava/lang/invoke/ResolvedMethodName;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MemberName" name="resolution" signature="Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/LambdaForm" name="vmentry" signature="Ljava/lang/invoke/MemberName;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MethodHandle" name="form" signature="Ljava/lang/invoke/LambdaForm;" flags="opt_openjdkMethodhandle"/>

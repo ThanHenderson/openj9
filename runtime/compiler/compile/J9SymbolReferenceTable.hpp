@@ -206,8 +206,8 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrFabricateShadowSymbol(TR_OpaqueClassBlock *containingClass, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal,  const char *name, const char *signature);
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   /// Find or fabricate the shadow symref for MemberName.vmtarget
-   TR::SymbolReference * findOrFabricateMemberNameVmTargetShadow();
+   /// Find or fabricate the shadow symref for ResolvedMethodName.vmtarget
+   TR::SymbolReference * findOrFabricateResolvedMethodNameVmTargetShadow();
 #endif
 
    /** \brief

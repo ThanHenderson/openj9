@@ -627,11 +627,15 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	}
 
 #ifdef J9VM_OPT_OPENJDK_METHODHANDLE
-	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/invoke/MemberName", "vmindex", "J", &vm->vmindexOffset)) {
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/invoke/ResolvedMethodName", "vmtarget", "J", &vm->vmtargetOffset)) {
 		return 1;
 	}
 
-	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/invoke/MemberName", "vmtarget", "J", &vm->vmtargetOffset)) {
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/invoke/ResolvedMethodName", "vmholder", "J", &vm->vmholderOffset)) {
+		return 1;
+	}
+
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/invoke/ResolvedMethodName", "vmindex", "J", &vm->vmindexOffset)) {
 		return 1;
 	}
 

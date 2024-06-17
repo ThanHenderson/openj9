@@ -1643,9 +1643,10 @@ old_fast_jitLookupDynamicPublicInterfaceMethod(J9VMThread *currentThread)
 	DECLARE_JIT_CLASS_PARM(receiverClass, 1);
 	DECLARE_JIT_PARM(j9object_t, memberName, 2);
 	J9JavaVM *vm = currentThread->javaVM;
-	J9Method *interfaceMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(currentThread, memberName, vm->vmtargetOffset);
+	j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(currentThread, memberName);
+	J9Method *interfaceMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(currentThread, resolvedMethodNameObject, vm->vmtargetOffset);
 	J9Class *interfaceClass = J9_CLASS_FROM_METHOD(interfaceMethod);
-	UDATA iTableIndex = (UDATA)J9OBJECT_U64_LOAD(currentThread, memberName, vm->vmindexOffset);
+	UDATA iTableIndex = (UDATA)J9OBJECT_U64_LOAD(currentThread, resolvedMethodNameObject, vm->vmindexOffset);
 	UDATA iTableOffset = sizeof(struct J9ITable) + (iTableIndex * sizeof(UDATA));
 	UDATA vTableOffset = convertITableOffsetToVTableOffset(currentThread, receiverClass, interfaceClass, iTableOffset);
 	Assert_CodertVM_false(0 == vTableOffset);
