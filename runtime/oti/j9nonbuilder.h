@@ -6086,6 +6086,7 @@ typedef struct J9JavaVM {
 	U_32 minimumLearningRatio;
 #ifdef J9VM_OPT_OPENJDK_METHODHANDLE
 	UDATA vmindexOffset;
+	UDATA vmholderOffset;
 	UDATA vmtargetOffset;
 	UDATA mutableCallSiteInvalidationCookieOffset;
 	UDATA jitVMEntryKeepAliveOffset;

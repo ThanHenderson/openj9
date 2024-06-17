@@ -5497,7 +5497,8 @@ ffi_OOM:
 		 */
 		j9object_t invokeCacheArray = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_INVOKECACHE(_currentThread, mhMetaData);
 		j9object_t memberName = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 0);
-		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
+		j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(_currentThread, memberName);
+		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, resolvedMethodNameObject, _vm->vmtargetOffset);
 		j9object_t appendix = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 1);
 		if (NULL != appendix) {
 			*(j9object_t*)--_sp = appendix;
@@ -9023,7 +9024,8 @@ retry:
 			 * and sendMethod is ((J9Method *)((j.l.MemberName)invokeCacheArray[0]) + vmtargetOffset)
 			 */
 			j9object_t memberName = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 0);
-			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
+			j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(_currentThread, memberName);
+			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, resolvedMethodNameObject, _vm->vmtargetOffset);
 
 			j9object_t appendix = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 1);
 			if (NULL != appendix) {
@@ -9124,7 +9126,8 @@ retry:
 
 		if (J9_EXPECTED(NULL != invokeCacheArray)) {
 			j9object_t memberName = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 0);
-			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
+			j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(_currentThread, memberName);
+			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, resolvedMethodNameObject, _vm->vmtargetOffset);
 
 			j9object_t appendix = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 1);
 			if (NULL != appendix) {
@@ -9270,7 +9273,8 @@ done:
 
 		j9object_t lambdaForm = J9VMJAVALANGINVOKEMETHODHANDLE_FORM(_currentThread, mhReceiver);
 		j9object_t memberName = J9VMJAVALANGINVOKELAMBDAFORM_VMENTRY(_currentThread, lambdaForm);
-		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
+		j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(_currentThread, memberName);
+		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, resolvedMethodNameObject, _vm->vmtargetOffset);
 
 		if (fromJIT) {
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
@@ -9290,11 +9294,13 @@ done:
 
 		/* Pop memberNameObject from the stack. */
 		j9object_t memberNameObject = *(j9object_t *)_sp++;
+		j9object_t resolvedMethodNameObject = NULL;
 		if (J9_UNEXPECTED(NULL == memberNameObject)) {
 			goto throw_npe;
 		}
 
-		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
+		resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(_currentThread, memberNameObject);
+		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, resolvedMethodNameObject, _vm->vmtargetOffset);
 
 		if (J9_EXPECTED(_currentThread->javaVM->initialMethods.throwDefaultConflict != _sendMethod)) {
 			romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
@@ -9373,7 +9379,8 @@ throw_npe:
 			return THROW_NPE;
 		}
 
-		J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
+		j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(_currentThread, memberNameObject);
+		J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, resolvedMethodNameObject, _vm->vmtargetOffset);
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 		UDATA methodArgCount = 0;
 		bool isInvokeBasic = (J9_BCLOOP_SEND_TARGET_METHODHANDLE_INVOKEBASIC == J9_BCLOOP_DECODE_SEND_TARGET(method->methodRunAddress));
@@ -9408,7 +9415,7 @@ throw_npe:
 		 * In that case, MemberName resolution has already done the iTable walk to get the corresponding vTable offset in
 		 * C and stored it in vmindex. The receiver is always an instance of C (or a subclass).
 		 */
-		UDATA vTableOffset = (UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
+		UDATA vTableOffset = (UDATA)J9OBJECT_U64_LOAD(_currentThread, resolvedMethodNameObject, _vm->vmindexOffset);
 		J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiverObject);
 		_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
 
@@ -9422,7 +9429,8 @@ throw_npe:
 		if (isInvokeBasic) {
 			j9object_t lambdaForm = J9VMJAVALANGINVOKEMETHODHANDLE_FORM(_currentThread, receiverObject);
 			j9object_t memberName = J9VMJAVALANGINVOKELAMBDAFORM_VMENTRY(_currentThread, lambdaForm);
-			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
+			resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(_currentThread, memberName);
+			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, resolvedMethodNameObject, _vm->vmtargetOffset);
 		}
 
 		if (fromJIT) {
@@ -9457,6 +9465,7 @@ throw_npe:
 
 		/* Pop memberNameObject from the stack. */
 		j9object_t memberNameObject = *(j9object_t *)_sp++;
+		j9object_t resolvedMethodNameObject = NULL;
 		if (J9_UNEXPECTED(NULL == memberNameObject)) {
 			if (fromJIT) {
 				/* Restore SP to before popping memberNameObject. */
@@ -9467,7 +9476,8 @@ throw_npe:
 			goto done;
 		}
 
-		method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
+		resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(_currentThread, memberNameObject);
+		method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, resolvedMethodNameObject, _vm->vmtargetOffset);
 		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 		methodArgCount = romMethod->argCount;
 
@@ -9489,7 +9499,7 @@ throw_npe:
 		 * supposed to go through non-interface virtual dispatch, like e.g. a non-final method
 		 * of Object, it will go through linkToVirtual() instead.
 		 */
-		iTableIndex = (UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
+		iTableIndex = (UDATA)J9OBJECT_U64_LOAD(_currentThread, resolvedMethodNameObject, _vm->vmindexOffset);
 		interfaceClass = J9_CLASS_FROM_METHOD(method);
 		vTableOffset = 0;
 		iTable = receiverClass->lastITable;
@@ -9583,7 +9593,8 @@ done:
 		 */
 		j9object_t invokeCacheArray = J9VMJAVALANGINVOKENATIVEMETHODHANDLE_INVOKECACHE(_currentThread, nativeMH);
 		j9object_t memberName = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 0);
-		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
+		j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(_currentThread, memberName);
+		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, resolvedMethodNameObject, _vm->vmtargetOffset);
 
 		/* Shift arguments by 1 and place the NEP object as the placeholder before the first argument
 		 * given the fixed-size arguments are popped out by JIT.

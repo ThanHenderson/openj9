@@ -4731,7 +4731,9 @@ TR_OpaqueMethodBlock*
 TR_J9VMBase::targetMethodFromMemberName(uintptr_t memberName)
    {
    TR_ASSERT(haveAccess(), "targetFromMemberName requires VM access");
-   return (TR_OpaqueMethodBlock*)J9OBJECT_U64_LOAD(vmThread(), memberName, vmThread()->javaVM->vmtargetOffset);
+
+   uintptr_t resolvedMethodNameObject = getReferenceField(memberName, "method", "Ljava/lang/invoke/ResolvedMethodName;");
+   return (TR_OpaqueMethodBlock*)J9OBJECT_U64_LOAD(vmThread(), resolvedMethodNameObject, vmThread()->javaVM->vmtargetOffset);
    }
 
 TR_OpaqueMethodBlock*
@@ -4865,8 +4867,9 @@ TR_J9VMBase::getMemberNameMethodInfo(
    if ((flags & (MN_IS_METHOD | MN_IS_CONSTRUCTOR)) == 0)
       return false;
 
-   auto tgt = J9OBJECT_U64_LOAD(vmThread(), object, vmThread()->javaVM->vmtargetOffset);
-   auto ix = J9OBJECT_U64_LOAD(vmThread(), object, vmThread()->javaVM->vmindexOffset);
+   uintptr_t resolvedMethodNameObject = getReferenceField(object, "method", "Ljava/lang/invoke/ResolvedMethodName;");
+   auto tgt = J9OBJECT_U64_LOAD(vmThread(), resolvedMethodNameObject, vmThread()->javaVM->vmtargetOffset);
+   auto ix = J9OBJECT_U64_LOAD(vmThread(), resolvedMethodNameObject, vmThread()->javaVM->vmindexOffset);
    uintptr_t jlClass = getReferenceField(object, "clazz", "Ljava/lang/Class;");
 
    out->vmtarget = (TR_OpaqueMethodBlock*)(uintptr_t)tgt;

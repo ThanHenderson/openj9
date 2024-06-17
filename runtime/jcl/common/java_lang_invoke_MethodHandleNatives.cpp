@@ -275,6 +275,12 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 	}
 
+	j9object_t resolvedMethodNameObject = vm->memoryManagerFunctions->J9AllocateObject(
+	        currentThread, J9VMJAVALANGINVOKERESOLVEDMETHODNAME(vm), J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	if (NULL == resolvedMethodNameObject) {
+		vmFuncs->setHeapOutOfMemoryError(currentThread);
+	}
+
 	if (!VM_VMHelpers::exceptionPending(currentThread)) {
 		if (addMemberNameToClass(currentThread, membernameObject, clazzObject)) {
 			J9VMJAVALANGINVOKEMEMBERNAME_SET_FLAGS(currentThread, membernameObject, flags);
@@ -284,8 +290,10 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 				J9VMJAVALANGINVOKEMEMBERNAME_SET_TYPE(currentThread, membernameObject, typeObject);
 			}
 			J9VMJAVALANGINVOKEMEMBERNAME_SET_CLAZZ(currentThread, membernameObject, clazzObject);
-			J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmindexOffset, (U_64)vmindex);
-			J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmtargetOffset, (U_64)target);
+			J9OBJECT_U64_STORE(currentThread, resolvedMethodNameObject, vm->vmindexOffset, (U_64)vmindex);
+			J9OBJECT_U64_STORE(currentThread, resolvedMethodNameObject, vm->vmholderOffset, (U_64)clazzObject);
+			J9OBJECT_U64_STORE(currentThread, resolvedMethodNameObject, vm->vmtargetOffset, (U_64)target);
+			J9VMJAVALANGINVOKEMEMBERNAME_SET_METHOD(currentThread, membernameObject, resolvedMethodNameObject);
 			Trc_JCL_java_lang_invoke_MethodHandleNatives_initImpl_setData(currentThread, flags, nameObject, typeObject, clazzObject, vmindex, target);
 		}
 	}
@@ -877,7 +885,8 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 	} else {
 		j9object_t membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
 		jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, membernameObject);
-		jlong vmindex = (jlong)J9OBJECT_ADDRESS_LOAD(currentThread, membernameObject, vm->vmindexOffset);
+		j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(currentThread, membernameObject);
+		jlong vmindex = (jlong)J9OBJECT_ADDRESS_LOAD(currentThread, resolvedMethodNameObject, vm->vmindexOffset);
 
 		Trc_JCL_java_lang_invoke_MethodHandleNatives_expand_Data(env, membernameObject, flags, vmindex);
 		if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
@@ -908,7 +917,8 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 			}
 		} else if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR)) {
-			J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, membernameObject, vm->vmtargetOffset);
+			j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(currentThread, membernameObject);
+			J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, resolvedMethodNameObject, vm->vmtargetOffset);
 			if (NULL != method) {
 				/* Retrieve method info using the J9Method and store to MN fields. */
 				J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
@@ -1002,8 +1012,21 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 	} else {
 		j9object_t membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
-		jlong vmindex = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmindexOffset);
-		jlong target = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmtargetOffset);
+		j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(currentThread, membernameObject);
+		if (NULL == resolvedMethodNameObject) {
+			resolvedMethodNameObject = vm->memoryManagerFunctions->J9AllocateObject(
+			        currentThread, J9VMJAVALANGINVOKERESOLVEDMETHODNAME(vm),
+			        J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+			if (NULL == resolvedMethodNameObject) {
+				vmFuncs->setHeapOutOfMemoryError(currentThread);
+				goto done;
+			}
+		}
+
+		/* Refetch MemberName after potential GC */
+		membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
+		jlong vmindex = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, resolvedMethodNameObject, vm->vmindexOffset);
+		jlong target = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, resolvedMethodNameObject, vm->vmtargetOffset);
 
 		jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, membernameObject);
 		jint new_flags = 0;
@@ -1342,8 +1365,11 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 				if (addMemberNameToClass(currentThread, membernameObject, new_clazz)) {
 					J9VMJAVALANGINVOKEMEMBERNAME_SET_FLAGS(currentThread, membernameObject, new_flags);
 					J9VMJAVALANGINVOKEMEMBERNAME_SET_CLAZZ(currentThread, membernameObject, new_clazz);
-					J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmindexOffset, (U_64)vmindex);
-					J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmtargetOffset, (U_64)target);
+					Assert_JCL_notNull(resolvedMethodNameObject);
+					J9OBJECT_U64_STORE(currentThread, resolvedMethodNameObject, vm->vmindexOffset, (U_64)vmindex);
+					J9OBJECT_U64_STORE(currentThread, resolvedMethodNameObject, vm->vmholderOffset, (U_64)new_clazz);
+					J9OBJECT_U64_STORE(currentThread, resolvedMethodNameObject, vm->vmtargetOffset, (U_64)target);
+					J9VMJAVALANGINVOKEMEMBERNAME_SET_METHOD(currentThread, membernameObject, resolvedMethodNameObject);
 
 					Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_resolved(env, vmindex, target, new_clazz, new_flags);
 
@@ -1729,7 +1755,8 @@ Java_java_lang_invoke_MethodHandleNatives_objectFieldOffset(JNIEnv *env, jclass 
 		} else {
 			jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, membernameObject);
 			if (J9_ARE_ALL_BITS_SET(flags, MN_IS_FIELD) && J9_ARE_NO_BITS_SET(flags, J9AccStatic)) {
-				J9JNIFieldID *fieldID = (J9JNIFieldID*)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmindexOffset);
+				j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(currentThread, membernameObject);
+				J9JNIFieldID *fieldID = (J9JNIFieldID*)(UDATA)J9OBJECT_U64_LOAD(currentThread, resolvedMethodNameObject, vm->vmindexOffset);
 				result = (jlong)fieldID->offset + J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 			} else {
 				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
@@ -1770,7 +1797,8 @@ Java_java_lang_invoke_MethodHandleNatives_staticFieldOffset(JNIEnv *env, jclass 
 		} else {
 			jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, membernameObject);
 			if (J9_ARE_ALL_BITS_SET(flags, MN_IS_FIELD & J9AccStatic)) {
-				result = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmtargetOffset);
+				j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(currentThread, membernameObject);
+				result = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, resolvedMethodNameObject, vm->vmtargetOffset);
 			} else {
 				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 			}
@@ -1860,7 +1888,8 @@ Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo(JNIEnv *env, jclass cl
 				 * (vTable offset for MH_REF_INVOKEVIRTUAL, iTable index for MH_REF_INVOKEINTERFACE,
 				 * and -1 for other ref kinds).
 				 */
-				jlong vmindex = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmindexOffset);
+				j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(currentThread, membernameObject);
+				jlong vmindex = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, resolvedMethodNameObject, vm->vmindexOffset);
 
 				if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
 					/* vmindex points to the field offset. */

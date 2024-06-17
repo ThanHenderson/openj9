@@ -1734,8 +1734,9 @@ prepareToFixMemberNames(J9VMThread *currentThread, J9HashTable *classHashTable)
 					/* The object from the list entry must be a MemberName. */
 					Assert_hshelp_true(clazz == J9VMJAVALANGINVOKEMEMBERNAME_OR_NULL(vm));
 
+					j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(currentThread, object);
 					/* It must be resolved, i.e. vmtarget must be nonzero. */
-					vmtarget = (UDATA)J9OBJECT_U64_LOAD(currentThread, object, vm->vmtargetOffset);
+					vmtarget = (UDATA)J9OBJECT_U64_LOAD(currentThread, resolvedMethodNameObject, vm->vmtargetOffset);
 					Assert_hshelp_true(0 != vmtarget);
 
 					/* Its clazz field must identify affectedClass. */
@@ -1750,11 +1751,11 @@ prepareToFixMemberNames(J9VMThread *currentThread, J9HashTable *classHashTable)
 							 * be updated first, and then it will be used to fix the MemberName afterward.
 							 */
 							J9JNIMethodID *methodID = vmFuncs->getJNIMethodID(currentThread, (J9Method *)vmtarget);
-							J9OBJECT_U64_STORE(currentThread, object, vm->vmindexOffset, (U_64)(UDATA)methodID);
+							J9OBJECT_U64_STORE(currentThread, resolvedMethodNameObject, vm->vmindexOffset, (U_64)(UDATA)methodID);
 						}
 
 						/* Temporarily take over vmtarget as the next pointer for a linked list of all affected MemberName instances. */
-						J9OBJECT_U64_STORE(currentThread, object, vm->vmtargetOffset, (U_64)(UDATA)firstAffectedMemberName);
+						J9OBJECT_U64_STORE(currentThread, resolvedMethodNameObject, vm->vmtargetOffset, (U_64)(UDATA)firstAffectedMemberName);
 						firstAffectedMemberName = object;
 					}
 
@@ -1780,9 +1781,10 @@ fixMemberNames(J9VMThread *currentThread, j9object_t *memberNamesToFix)
 	*memberNamesToFix = NULL; /* For idempotency. */
 
 	while (NULL != object) {
-		j9object_t nextObject = (j9object_t)(UDATA)J9OBJECT_U64_LOAD(currentThread, object, vm->vmtargetOffset);
+		j9object_t resolvedMethodNameObject = J9VMJAVALANGINVOKEMEMBERNAME_METHOD(currentThread, object);
+		j9object_t nextObject = (j9object_t)(UDATA)J9OBJECT_U64_LOAD(currentThread, resolvedMethodNameObject, vm->vmtargetOffset);
 		jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, object);
-		U_64 vmindex = J9OBJECT_U64_LOAD(currentThread, object, vm->vmindexOffset);
+		U_64 vmindex = J9OBJECT_U64_LOAD(currentThread, resolvedMethodNameObject, vm->vmindexOffset);
 
 		Assert_hshelp_false(0 == vmindex); /* Must be a valid J9JNIFieldID or J9JNIMethodID pointer. */
 
@@ -1799,15 +1801,15 @@ fixMemberNames(J9VMThread *currentThread, j9object_t *memberNamesToFix)
 				}
 			}
 
-			J9OBJECT_U64_STORE(currentThread, object, vm->vmtargetOffset, (U_64)offset);
+			J9OBJECT_U64_STORE(currentThread, resolvedMethodNameObject, vm->vmtargetOffset, (U_64)offset);
 		} else if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR)) {
 			/* Update vmtarget to vmindex->method and set vmindex as appropriate for dispatch. */
 			J9JNIMethodID *methodID = (J9JNIMethodID *)(UDATA)vmindex;
 			j9object_t clazzObj = J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(currentThread, object);
 			J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObj);
 			jlong vmindex = vmindexValueForMethodMemberName(methodID, clazz, flags);
-			J9OBJECT_U64_STORE(currentThread, object, vm->vmtargetOffset, (U_64)(UDATA)methodID->method);
-			J9OBJECT_U64_STORE(currentThread, object, vm->vmindexOffset, (U_64)vmindex);
+			J9OBJECT_U64_STORE(currentThread, resolvedMethodNameObject, vm->vmtargetOffset, (U_64)(UDATA)methodID->method);
+			J9OBJECT_U64_STORE(currentThread, resolvedMethodNameObject, vm->vmindexOffset, (U_64)vmindex);
 		} else {
 			/* The MemberName must represent a field, method, or constructor. */
 			Assert_hshelp_true(FALSE);

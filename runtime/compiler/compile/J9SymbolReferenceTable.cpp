@@ -886,20 +886,20 @@ J9::SymbolReferenceTable::findOrFabricateShadowSymbol(
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrFabricateMemberNameVmTargetShadow()
+J9::SymbolReferenceTable::findOrFabricateResolvedMethodNameVmTargetShadow()
    {
    bool isVolatile = false;
    bool isPrivate = false;
    bool isFinal = true;
    TR::SymbolReference *symRef = self()->findOrFabricateShadowSymbol(
       comp()->getMethodSymbol(),
-      TR::Symbol::Java_lang_invoke_MemberName_vmtarget,
+      TR::Symbol::Java_lang_invoke_ResolvedMethodName_vmtarget,
       TR::Address,
       comp()->fej9()->getVMTargetOffset(),
       isVolatile,
       isPrivate,
       isFinal,
-      "java/lang/invoke/MemberName.vmtarget J");
+      "java/lang/invoke/ResolvedMethodName.vmtarget J");
 
    symRef->getSymbol()->setNotCollected();
    return symRef;

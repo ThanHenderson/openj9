@@ -876,13 +876,13 @@ public:
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    /*
     * \brief
-    *    Return MemberName.vmtarget, a J9method pointer for method represented by `memberName`
+    *    Return MemberName.method.vmtarget, a J9method pointer for method represented by `memberName`
     *    Caller must acquire VM access
     */
    virtual TR_OpaqueMethodBlock* targetMethodFromMemberName(uintptr_t memberName);
    /*
     * \brief
-    *    Return MemberName.vmtarget, a J9method pointer for method represented by `memberName`
+    *    Return MemberName.method.vmtarget, a J9method pointer for method represented by `memberName`
     *    VM access is not required
     */
    virtual TR_OpaqueMethodBlock* targetMethodFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);

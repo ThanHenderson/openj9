@@ -799,7 +799,7 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_invoke
    TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
    TR::TransformUtil::separateNullCheck(comp(), treetop, trace());
 
-   // We'll get the J9Method by loading mh.form.vmentry.vmtarget.
+   // We'll get the J9Method by loading mh.form.vmentry.method.vmtarget.
    // isVolatile, isPrivate, and isFinal here describe both form and vmentry.
    bool isVolatile = false;
    bool isPrivate = false;
@@ -839,23 +839,41 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_invoke
          isFinal,
          "java/lang/invoke/LambdaForm.vmentry Ljava/lang/invoke/MemberName;");
 
+   offset = fej9->getInstanceFieldOffsetIncludingHeader(
+      "Ljava/lang/invoke/MemberName;",
+      "method",
+      "Ljava/lang/invoke/ResolvedMethodName;",
+      comp()->getCurrentMethod());
+
+   TR::SymbolReference *resolvedMethodNameSymRef =
+      comp()->getSymRefTab()->findOrFabricateShadowSymbol(
+         comp()->getMethodSymbol(),
+         TR::Symbol::Java_lang_invoke_MemberName_method,
+         TR::Address,
+         offset,
+         isVolatile,
+         isPrivate,
+         isFinal,
+         "java/lang/invoke/MemberName.method Ljava/lang/invoke/ResolvedMethodName;");
+
    TR::SymbolReference *vmTargetSymRef =
-      comp()->getSymRefTab()->findOrFabricateMemberNameVmTargetShadow();
+      comp()->getSymRefTab()->findOrFabricateResolvedMethodNameVmTargetShadow();
 
    if (comp()->cg()->enableJitDispatchJ9Method())
       {
       node->setSymbolReference(
          comp()->getSymRefTab()->findOrCreateDispatchJ9MethodSymbolRef());
 
-      TR::Node *mh = node->getChild(0);
-      TR::Node *lf = TR::Node::createWithSymRef(node, TR::aloadi, 1, mh, lambdaFormSymRef);
-      TR::Node *mn = TR::Node::createWithSymRef(node, TR::aloadi, 1, lf, memberNameSymRef);
-      TR::Node *j9m = TR::Node::createWithSymRef(node, TR::aloadi, 1, mn, vmTargetSymRef);
-      node->addChildren(&j9m, 1);
+      TR::Node *methodHandleNode = node->getChild(0);
+      TR::Node *lambdaFormNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, methodHandleNode, lambdaFormSymRef);
+      TR::Node *memberNameNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, lambdaFormNode, memberNameSymRef);
+      TR::Node *resolvedMethodNameNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, memberNameNode, resolvedMethodNameSymRef);
+      TR::Node *j9MethodNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, resolvedMethodNameNode, vmTargetSymRef);
+      node->addChildren(&j9MethodNode, 1);
       for (int32_t i = node->getNumChildren() - 1; i > 0; i--)
          node->setChild(i, node->getChild(i - 1));
 
-      node->setChild(0, j9m);
+      node->setChild(0, j9MethodNode);
       return;
       }
 
@@ -872,11 +890,12 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_invoke
       currentChild->recursivelyDecReferenceCount();
       }
 
-   TR::Node* mhNode = TR::Node::createLoad(node, argsList->front()); // the first arg of invokeBasic call is the receiver MethodHandle object
-   TR::Node * lambdaFormNode = TR::Node::createWithSymRef(node, comp()->il.opCodeForIndirectLoad(TR::Address), 1 , mhNode, lambdaFormSymRef);
+   TR::Node *methodHandleNode = TR::Node::createLoad(node, argsList->front()); // the first arg of invokeBasic call is the receiver MethodHandle object
+   TR::Node *lambdaFormNode = TR::Node::createWithSymRef(node, comp()->il.opCodeForIndirectLoad(TR::Address), 1 , methodHandleNode, lambdaFormSymRef);
    lambdaFormNode->setIsNonNull(true);
-   TR::Node * memberNameNode = TR::Node::createWithSymRef(node, comp()->il.opCodeForIndirectLoad(TR::Address), 1, lambdaFormNode, memberNameSymRef);
-   TR::Node * vmTargetNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, memberNameNode, vmTargetSymRef);
+   TR::Node *memberNameNode = TR::Node::createWithSymRef(node, comp()->il.opCodeForIndirectLoad(TR::Address), 1, lambdaFormNode, memberNameSymRef);
+   TR::Node *resolvedMethodNameNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, memberNameNode, resolvedMethodNameSymRef);
+   TR::Node *vmTargetNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, resolvedMethodNameNode, vmTargetSymRef);
    processVMInternalNativeFunction(treetop, node, vmTargetNode, argsList, inlCallNode);
    }
 
@@ -884,8 +903,28 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
    {
    TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
 
+   uint32_t offset = fej9->getInstanceFieldOffsetIncludingHeader(
+      "Ljava/lang/invoke/MemberName;",
+      "method",
+      "Ljava/lang/invoke/ResolvedMethodName;",
+      comp()->getCurrentMethod());
+
+   bool isVolatile = false;
+   bool isPrivate = false;
+   bool isFinal = true;
+   TR::SymbolReference *resolvedMethodNameSymRef =
+      comp()->getSymRefTab()->findOrFabricateShadowSymbol(
+         comp()->getMethodSymbol(),
+         TR::Symbol::Java_lang_invoke_MemberName_method,
+         TR::Address,
+         offset,
+         isVolatile,
+         isPrivate,
+         isFinal,
+         "java/lang/invoke/MemberName.method Ljava/lang/invoke/ResolvedMethodName;");
+
    TR::SymbolReference *vmTargetSymRef =
-      comp()->getSymRefTab()->findOrFabricateMemberNameVmTargetShadow();
+      comp()->getSymRefTab()->findOrFabricateResolvedMethodNameVmTargetShadow();
 
    if (comp()->cg()->enableJitDispatchJ9Method())
       {
@@ -917,10 +956,12 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
       for (int32_t i = lastChildIndex; i > 0; i--)
          node->setChild(i, node->getChild(i - 1));
 
-      TR::Node *target =
-         TR::Node::createWithSymRef(node, TR::aloadi, 1, memberName, vmTargetSymRef);
+      TR::Node *resolvedMethodName =
+         TR::Node::createWithSymRef(node, TR::aloadi, 1, memberName, resolvedMethodNameSymRef);
+      TR::Node *vmTarget =
+         TR::Node::createWithSymRef(node, TR::aloadi, 1, resolvedMethodName, vmTargetSymRef);
 
-      node->setAndIncChild(0, target);
+      node->setAndIncChild(0, vmTarget);
       memberName->decReferenceCount();
       return;
       }
@@ -939,12 +980,15 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
       inlCallNode->setAndIncChild(i, TR::Node::createLoad(node, newSymbolReference));
       currentChild->recursivelyDecReferenceCount();
       }
-   // load from membername.vmTarget, which is the J9Method
-   TR::Node* mnNode = TR::Node::createLoad(node, argsList->back());
-   TR::Node * vmTargetNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, mnNode, vmTargetSymRef);
-   vmTargetNode->setIsNonNull(true);
+   // load from MemberName.method.vmTarget, which is the J9Method
+   TR::Node* memberName = TR::Node::createLoad(node, argsList->back());
+   TR::Node *resolvedMethodName =
+      TR::Node::createWithSymRef(node, TR::aloadi, 1, memberName, resolvedMethodNameSymRef);
+   TR::Node *vmTarget =
+      TR::Node::createWithSymRef(node, TR::aloadi, 1, resolvedMethodName, vmTargetSymRef);
+   vmTarget->setIsNonNull(true);
    argsList->pop_back(); // MemberName is not required when dispatching directly to the jitted method address
-   processVMInternalNativeFunction(treetop, node, vmTargetNode, argsList, inlCallNode);
+   processVMInternalNativeFunction(treetop, node, vmTarget, argsList, inlCallNode);
    }
 
 void J9::RecognizedCallTransformer::processVMInternalNativeFunction(TR::TreeTop* treetop, TR::Node* node, TR::Node* vmTargetNode, TR::list<TR::SymbolReference *>* argsList, TR::Node* inlCallNode)
@@ -1044,19 +1088,42 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
 
    treetop->insertBefore(TR::TreeTop::create(comp(), nullCheck));
 
-   // Get the VFT offset from MemberName.vmindex
+   // Get the VFT offset from MemberName.method.vmindex
+   TR_J9VMBase *fej9 = comp()->fej9();
+   uint32_t resolvedMethodNameOffset = fej9->getInstanceFieldOffsetIncludingHeader(
+      "Ljava/lang/invoke/MemberName;",
+      "method",
+      "Ljava/lang/invoke/ResolvedMethodName;",
+      comp()->getCurrentMethod());
+
+   bool isVolatile = false;
+   bool isPrivate = false;
+   bool isFinal = true;
+   TR::SymbolReference *resolvedMethodNameSymRef =
+      comp()->getSymRefTab()->findOrFabricateShadowSymbol(
+         comp()->getMethodSymbol(),
+         TR::Symbol::Java_lang_invoke_MemberName_method,
+         TR::Address,
+         resolvedMethodNameOffset,
+         isVolatile,
+         isPrivate,
+         isFinal,
+         "java/lang/invoke/MemberName.method Ljava/lang/invoke/ResolvedMethodName;");
+
    TR::SymbolReference* vmIndexSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(
       comp()->getMethodSymbol(),
-      TR::Symbol::Java_lang_invoke_MemberName_vmindex,
+      TR::Symbol::Java_lang_invoke_ResolvedMethodName_vmindex,
       TR::Int64,
-      comp()->fej9()->getVMIndexOffset(),
-      false,
-      false,
-      true,
-      "java/lang/invoke/MemberName.vmindex J");
+      fej9->getVMIndexOffset(),
+      isVolatile,
+      isPrivate,
+      isFinal,
+      "java/lang/invoke/ResolvedMethodName.vmindex J");
 
+   TR::Node *resolvedMethodNameNode =
+      TR::Node::createWithSymRef(node, TR::aloadi, 1, memberNameNode, resolvedMethodNameSymRef);
    TR::Node *vftOffset =
-      TR::Node::createWithSymRef(node, TR::aloadi, 1, memberNameNode, vmIndexSymRef);
+      TR::Node::createWithSymRef(node, TR::aloadi, 1, resolvedMethodNameNode, vmIndexSymRef);
 
    if (!comp()->target().is64Bit())
       vftOffset = TR::Node::create(node, TR::l2i, 1, vftOffset);
