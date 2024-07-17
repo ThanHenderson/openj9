@@ -1447,6 +1447,14 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+#if defined(LINUX)
+		/* Check if there is a request to disable the mmap-based allocation for the suballocator (linux only). */
+		if (try_scan(&scan_start, "suballocatorQuickAllocDisable")) {
+			extensions->suballocatorQuickAlloc = false;
+			continue;
+		}
+#endif /* defined(LINUX) */
+
 		/* for testing and service reasons, split heaps is currently restricted to Win32 only */
 #if defined(J9VM_GC_GENERATIONAL) && (defined(WIN32) && !defined(WIN64))
 		/* see if we are supposed to enable split heaps */
