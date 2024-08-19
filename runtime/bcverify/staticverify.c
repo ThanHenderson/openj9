@@ -1267,6 +1267,14 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 				IDATA slotCount;
 				UDATA checkAppendArraySize = FALSE;
 
+				/* Throw a VerifyError if the current offset doesn't correspond to the start of a bytecode. */
+				if ((-1 != offset) && (0 == map[offset])) {
+					errorCode = FALLBACK_VERIFY_ERROR;
+					exceptionDetails->stackmapFrameIndex = (I_32)j;
+					exceptionDetails->stackmapFrameBCI = (U_32)offset;
+					goto _failedCheck;
+				}
+
 				if ((entries + 1) > end) {
 					errorCode = FATAL_CLASS_FORMAT_ERROR;
 					goto _failedCheck;
@@ -1290,8 +1298,8 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 				}
 				offset++;
 
-				/* Throw the VerifyError without delay in the case of bad offset so as to match the RI's behavior */
-				if ((offset >= code->codeLength) || (0 == map[offset])) {
+				/* Throw a VerifyError if the offset delta calculation exceeds the code length. */
+				if ((offset >= code->codeLength)) {
 					errorCode = FALLBACK_VERIFY_ERROR;
 					exceptionDetails->stackmapFrameIndex = (I_32)j;
 					exceptionDetails->stackmapFrameBCI = (U_32)offset;
