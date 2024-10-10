@@ -91,6 +91,29 @@ threadParkImpl(J9VMThread *vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeou
 		/* vmThread->threadObject != NULL because vmThread must be the current thread */
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, J9VMJAVALANGTHREAD_PARKBLOCKER(vmThread, vmThread->threadObject));
 		TRIGGER_J9HOOK_VM_PARK(vm->hookInterface, vmThread, millis, nanos);
+
+		// Set j.l.Thread status to WAITING.
+		j9object_t receiverObject = vmThread->threadObject;
+		U_64 oldState = J9VMTHREAD_STATE_RUNNING;
+#if JAVA_SPEC_VERSION >= 19
+		j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(vmThread, receiverObject);
+		if (NULL != threadHolder) {
+			oldState = J9VMJAVALANGTHREADFIELDHOLDER_THREADSTATUS(vmThread, threadHolder);
+			if (0 != (thrstate & J9_PUBLIC_FLAGS_THREAD_TIMED)) {
+				J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, J9VMTHREAD_STATE_PARKED_TIMED);
+			} else {
+				J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, J9VMTHREAD_STATE_PARKED);
+			}
+		}
+#else /* JAVA_SPEC_VERSION >= 19 */
+		oldState = J9VMJAVALANGTHREAD_THREADSTATUS(vmThread, receiverObject);
+		if (0 != (thrstate & J9_PUBLIC_FLAGS_THREAD_TIMED)) {
+			J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, J9VMTHREAD_STATE_PARKED_TIMED);
+		} else {
+			J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, J9VMTHREAD_STATE_PARKED);
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 		internalReleaseVMAccessSetStatus(vmThread, thrstate);
 
 		while (1) {
@@ -109,6 +132,18 @@ threadParkImpl(J9VMThread *vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeou
 		}
 
 		internalAcquireVMAccessClearStatus(vmThread, thrstate);
+
+		// Set j.l.Thread status to oldState.
+		receiverObject = vmThread->threadObject;
+#if JAVA_SPEC_VERSION >= 19
+		threadHolder = J9VMJAVALANGTHREAD_HOLDER(vmThread, receiverObject);
+		if (NULL != threadHolder) {
+			J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, oldState);
+		}
+#else /* JAVA_SPEC_VERSION >= 19 */
+		J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, oldState);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 		TRIGGER_J9HOOK_VM_UNPARKED(vm->hookInterface, vmThread);
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, NULL);
 	}

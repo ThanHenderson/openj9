@@ -106,10 +106,44 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 #endif
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, object);
 		object = NULL;
+
+		// Set j.l.Thread status to WAITING.
+		j9object_t receiverObject = vmThread->threadObject;
+		U_64 oldState = J9VMTHREAD_STATE_RUNNING;
+#if JAVA_SPEC_VERSION >= 19
+		j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(vmThread, receiverObject);
+		if (NULL != threadHolder) {
+			oldState = J9VMJAVALANGTHREADFIELDHOLDER_THREADSTATUS(vmThread, threadHolder);
+			if (0 != (thrstate & J9_PUBLIC_FLAGS_THREAD_TIMED)) {
+				J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, J9VMTHREAD_STATE_WAITING_TIMED);
+			} else {
+				J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, J9VMTHREAD_STATE_WAITING);
+			}
+		}
+#else /* JAVA_SPEC_VERSION >= 19 */
+		oldState = J9VMJAVALANGTHREAD_THREADSTATUS(vmThread, receiverObject);
+		if (0 != (thrstate & J9_PUBLIC_FLAGS_THREAD_TIMED)) {
+			J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, J9VMTHREAD_STATE_WAITING_TIMED);
+		} else {
+			J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, J9VMTHREAD_STATE_WAITING);
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		internalReleaseVMAccessSetStatus(vmThread, thrstate);
 		rc = timeCompensationHelper(vmThread,
 			interruptable ? HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE : HELPER_TYPE_MONITOR_WAIT_TIMED, monitor, millis, nanos);
 		internalAcquireVMAccessClearStatus(vmThread, thrstate);
+
+		// Set j.l.Thread status to oldState.
+		receiverObject = vmThread->threadObject;
+#if JAVA_SPEC_VERSION >= 19
+		threadHolder = J9VMJAVALANGTHREAD_HOLDER(vmThread, receiverObject);
+		if (NULL != threadHolder) {
+			J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, oldState);
+		}
+#else /* JAVA_SPEC_VERSION >= 19 */
+		J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, oldState);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, NULL);
 		omrthread_monitor_unpin(monitor, vmThread->osThread);
 		TRIGGER_J9HOOK_VM_MONITOR_WAITED(javaVM->hookInterface, vmThread, monitor, millis, nanos, rc, startTicks, (UDATA) monitor, VM_VMHelpers::currentClass(monitorClass));
@@ -179,9 +213,36 @@ threadSleepImpl(J9VMThread *vmThread, I_64 millis, I_32 nanos)
 #endif
 		if (0 == rc) {
 			TRIGGER_J9HOOK_VM_SLEEP(javaVM->hookInterface, vmThread, millis, nanos);
+
+			// Set j.l.Thread status to SLEEPING.
+			j9object_t receiverObject = vmThread->threadObject;
+			U_64 oldState = J9VMTHREAD_STATE_RUNNING;
+#if JAVA_SPEC_VERSION >= 19
+			j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(vmThread, receiverObject);
+			if (NULL != threadHolder) {
+				oldState = J9VMJAVALANGTHREADFIELDHOLDER_THREADSTATUS(vmThread, threadHolder);
+				J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, J9VMTHREAD_STATE_SLEEPING);
+			}
+#else /* JAVA_SPEC_VERSION >= 19 */
+			oldState = J9VMJAVALANGTHREAD_THREADSTATUS(vmThread, receiverObject);
+			J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, J9VMTHREAD_STATE_SLEEPING);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 			internalReleaseVMAccessSetStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
 			rc = timeCompensationHelper(vmThread, HELPER_TYPE_THREAD_SLEEP, NULL, millis, nanos);
 			internalAcquireVMAccessClearStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
+
+			// Set j.l.Thread status to oldState.
+			receiverObject = vmThread->threadObject;
+#if JAVA_SPEC_VERSION >= 19
+			threadHolder = J9VMJAVALANGTHREAD_HOLDER(vmThread, receiverObject);
+			if (NULL != threadHolder) {
+				J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, oldState);
+			}
+#else /* JAVA_SPEC_VERSION >= 19 */
+			J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, oldState);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 			TRIGGER_J9HOOK_VM_SLEPT(javaVM->hookInterface, vmThread, millis, nanos, startTicks);
 		}
 
