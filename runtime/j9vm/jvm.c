@@ -1983,6 +1983,9 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	specialArgs.executableJarPath = NULL;
 	specialArgs.ibmMallocTraceSet = &ibmMallocTraceSet;
 	specialArgs.captureCommandLine = TRUE;
+#if defined(J9VM_OPT_SNAPSHOTS)
+	specialArgs.ramCache = NULL;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if defined(J9ZOS390)
 	/*
 	 * Temporarily disable capturing the command line on z/OS.
