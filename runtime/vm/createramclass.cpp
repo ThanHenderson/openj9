@@ -2361,10 +2361,10 @@ nativeOOM:
 
 #if defined(J9VM_OPT_SNAPSHOTS)
 		if (IS_RESTORE_RUN(javaVM)) {
-			/* needed to make sure class hooks are only run once */
-			classFlags |= J9ClassIsLoadedFromImage;
+			/* This flag is needed to ensure class hooks are run only once. */
+			classFlags |= J9ClassIsLoadedFromSnapshotImage;
 		}
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 		state->ramClass->classFlags = classFlags;
 

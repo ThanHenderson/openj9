@@ -122,7 +122,7 @@ getCurrentClassLoader(J9VMThread *currentThread)
 				 * the classloader object is set
 				 */
 				|| (NULL == classLoader->classLoaderObject)
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 			) {
 				classLoader = vm->systemClassLoader;
 			}

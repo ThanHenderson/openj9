@@ -71,14 +71,13 @@ typedef enum J9MemoryRegionType {
  * fileOffset: The offset in the snapshot file where the region resides. Currently this
  * 			must be page aligned in order to map the memory in. In the future this restriction
  * 			will be removed once shared libraries are generated.
- * startAddr: The address in which the memoryRegion is located
+ * startAddr: The address in which the memoryRegion is located.
  * alignedStartAddr: The address in which the memoryRegion is located shifted up to the page boundary.
  * 			This is the address at which the memoryRegion will be mapped in on the restore run.
- * totalSize: Size of the memoryRegion including padding
- * mappableSize: Size of the memoryRegion excluding padding
- * permissions: Protection flags for the memoryRegion
- *
- * type: This is the type of  memory region. Right now there are two , this will increase in the future.
+ * totalSize: Size of the memoryRegion including padding.
+ * mappableSize: Size of the memoryRegion excluding padding.
+ * permissions: Protection flags for the memoryRegion.
+ * type: This is the type of  memory region. Right now there are two, this may increase in the future.
  * 			If we decide to be more thrifty on footprint we can bundle this with permissions.
  *
  * TODO Note: Page alignment will be less of a concern when we start writing to shared libraries. In
@@ -98,9 +97,11 @@ typedef struct J9MemoryRegion {
 /*
  * Struct containing data about image heap and quick access variables
  *
- * Allows us to dump this struct into file and reload easier
+ * Allows us to dump this struct into file and reload more easily.
  * Allocated space for image data is longer than sizeof(JVMImageHeader) and includes heap. see @ref JVMImage::allocateImageMemory
- * All quick access variables are J9WSRP to allow reallocation in future. TODO: Allow heap reallocation 
+ * All quick access variables are J9WSRP to allow reallocation in future.
+ *
+ * TODO: Allow heap reallocation.
  */
 typedef struct J9SnapshotHeader {
 	UDATA imageSize; /* image size in bytes */

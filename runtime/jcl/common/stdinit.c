@@ -471,7 +471,6 @@ internalInitializeJavaLangClassLoader(JNIEnv * env)
 		 * the applicationClassLoader now or vm will start throwing NoClassDefFoundException.
 		 */
 #if defined(J9VM_OPT_SNAPSHOTS)
-		/* set app class loader object if restore run */
 		if (IS_RESTORE_RUN(vm)) {
 			vmFuncs->initializeImageClassLoaderObject(vm, vm->applicationClassLoader, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
 		} else
@@ -499,7 +498,7 @@ internalInitializeJavaLangClassLoader(JNIEnv * env)
 		}
 
 #if defined(J9VM_OPT_SNAPSHOTS)
-		/* always use persisted version in restore run */
+		/* Restore runs use the persisted extensionClassLoader. */
 		if (!IS_RESTORE_RUN(vm))
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 		{
@@ -508,7 +507,6 @@ internalInitializeJavaLangClassLoader(JNIEnv * env)
 
 		if (NULL == vm->extensionClassLoader) {
 #if defined(J9VM_OPT_SNAPSHOTS)
-			/* set extension class loader object if warm run */
 			if (IS_RESTORE_RUN(vm)) {
 				vmFuncs->initializeImageClassLoaderObject(vm, vm->extensionClassLoader, classLoaderObject);
 			} else

@@ -462,5 +462,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	initializeImageClassLoaderObject,
 	initializeImageClassObject,
 	loadWarmClass,
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 };

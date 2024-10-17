@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2024 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@ void image_mem_free_memory32(struct OMRPortLibrary *portLibrary, void *memoryPoi
 void *image_mem_allocate_memory32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, const char *callSite, uint32_t category);
 
 
-VMSnapshotImpl::VMSnapshotImpl(J9PortLibrary *portLibrary, const char* ramCache) :
+VMSnapshotImpl::VMSnapshotImpl(J9PortLibrary *portLibrary, const char *ramCache) :
 	_vm(NULL),
 	_portLibrary(portLibrary),
 	_snapshotHeader(NULL),
@@ -89,7 +89,7 @@ VMSnapshotImpl::~VMSnapshotImpl()
 bool
 VMSnapshotImpl::initializeMonitor(void)
 {
-	if (omrthread_monitor_init_with_name(&_vmSnapshotImplMonitor, 0, "JVM Image Heap Monitor") != 0) {
+	if (omrthread_monitor_init_with_name(&_vmSnapshotImplMonitor, 0, "JVM Snapshot Heap Monitor") != 0) {
 		return false;
 	}
 
@@ -97,7 +97,7 @@ VMSnapshotImpl::initializeMonitor(void)
 }
 
 void
-VMSnapshotImpl::storeInitialMethods(J9Method* cInitialStaticMethod, J9Method* cInitialSpecialMethod, J9Method* cInitialVirtualMethod)
+VMSnapshotImpl::storeInitialMethods(J9Method *cInitialStaticMethod, J9Method *cInitialSpecialMethod, J9Method *cInitialVirtualMethod)
 {
 	WSRP_SET(_snapshotHeader->cInitialStaticMethod, cInitialStaticMethod);
 	WSRP_SET(_snapshotHeader->cInitialSpecialMethod, cInitialSpecialMethod);
@@ -105,24 +105,24 @@ VMSnapshotImpl::storeInitialMethods(J9Method* cInitialStaticMethod, J9Method* cI
 }
 
 void
-VMSnapshotImpl::setInitialMethods(J9Method** cInitialStaticMethod, J9Method** cInitialSpecialMethod, J9Method** cInitialVirtualMethod)
+VMSnapshotImpl::setInitialMethods(J9Method **cInitialStaticMethod, J9Method **cInitialSpecialMethod, J9Method **cInitialVirtualMethod)
 {
-	*cInitialStaticMethod = WSRP_GET(_snapshotHeader->cInitialStaticMethod, J9Method*);
-	*cInitialSpecialMethod = WSRP_GET(_snapshotHeader->cInitialSpecialMethod, J9Method*);
-	*cInitialVirtualMethod = WSRP_GET(_snapshotHeader->cInitialVirtualMethod, J9Method*);
+	*cInitialStaticMethod = WSRP_GET(_snapshotHeader->cInitialStaticMethod, J9Method *);
+	*cInitialSpecialMethod = WSRP_GET(_snapshotHeader->cInitialSpecialMethod, J9Method *);
+	*cInitialVirtualMethod = WSRP_GET(_snapshotHeader->cInitialVirtualMethod, J9Method *);
 }
 
 bool
 VMSnapshotImpl::initializeInvalidITable(void)
 {
-	_invalidITable = (J9ITable *) subAllocateMemory(sizeof(J9ITable), J9JAVAVM_COMPRESS_OBJECT_REFERENCES(_vm));
+	_invalidITable = (J9ITable *)subAllocateMemory(sizeof(J9ITable), J9JAVAVM_COMPRESS_OBJECT_REFERENCES(_vm));
 	if (NULL == _invalidITable) {
 		return false;
 	}
 
-	_invalidITable->interfaceClass = (J9Class *) (UDATA) 0xDEADBEEF;
+	_invalidITable->interfaceClass = (J9Class *)((UDATA)0xDEADBEEF);
 	_invalidITable->depth = 0;
-	_invalidITable->next = (J9ITable *) NULL;
+	_invalidITable->next = (J9ITable *)NULL;
 
 	return true;
 }
@@ -134,7 +134,7 @@ VMSnapshotImpl::destroyMonitor(void)
 }
 
 VMSnapshotImpl *
-VMSnapshotImpl::createInstance(J9PortLibrary *portLibrary, const char* ramCache)
+VMSnapshotImpl::createInstance(J9PortLibrary *portLibrary, const char *ramCache)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	VMSnapshotImpl *jvmInstance = (VMSnapshotImpl *)j9mem_allocate_memory(sizeof(VMSnapshotImpl), J9MEM_CATEGORY_CLASSES);
@@ -149,6 +149,7 @@ bool
 VMSnapshotImpl::setupWarmRun(void)
 {
 	bool success = true;
+
 	if (!readImageFromFile()) {
 		success = false;
 		goto done;
@@ -172,6 +173,7 @@ bool
 VMSnapshotImpl::setupColdRun(void)
 {
 	bool success = true;
+
 	if (NULL == allocateImageMemory()) {
 		success = false;
 		goto done;
@@ -198,13 +200,14 @@ VMSnapshotImpl::setupColdRunPostInitialize(void)
 
 	if (!initializeInvalidITable()) {
 		success = false;
-		goto done;
 	}
 
-done:
 	return success;
 }
 
+/**
+ * TODO: Clean up control flow.
+ */
 void *
 VMSnapshotImpl::allocateImageMemory()
 {
@@ -213,14 +216,14 @@ VMSnapshotImpl::allocateImageMemory()
 	void *generalMemorySection = NULL;
 	void *sub4GBMemorySection = NULL;
 
-	_snapshotHeader = (J9SnapshotHeader *) j9mem_allocate_memory(sizeof(J9SnapshotHeader), J9MEM_CATEGORY_CLASSES);
+	_snapshotHeader = (J9SnapshotHeader *)j9mem_allocate_memory(sizeof(J9SnapshotHeader), J9MEM_CATEGORY_CLASSES);
 	if (NULL == _snapshotHeader) {
 		goto done;
 	}
 
 	_snapshotHeader->numOfMemorySections = NUM_OF_MEMORY_SECTIONS;
 
-	_memoryRegions = (J9MemoryRegion *) j9mem_allocate_memory(sizeof(J9MemoryRegion) * NUM_OF_MEMORY_SECTIONS, J9MEM_CATEGORY_CLASSES);
+	_memoryRegions = (J9MemoryRegion *)j9mem_allocate_memory(sizeof(J9MemoryRegion) * NUM_OF_MEMORY_SECTIONS, J9MEM_CATEGORY_CLASSES);
 	if (NULL == _memoryRegions) {
 		goto freeHeader;
 	}
@@ -231,7 +234,7 @@ VMSnapshotImpl::allocateImageMemory()
 	}
 
 	_memoryRegions[GENERAL].startAddr = generalMemorySection;
-	_memoryRegions[GENERAL].alignedStartAddr = (void *) ROUND_UP_TO_POWEROF2((UDATA)generalMemorySection, pageSize);
+	_memoryRegions[GENERAL].alignedStartAddr = (void *)ROUND_UP_TO_POWEROF2((UDATA)generalMemorySection, pageSize);
 	_memoryRegions[GENERAL].totalSize = GENERAL_MEMORY_SECTION_SIZE + pageSize;
 	_memoryRegions[GENERAL].mappableSize = GENERAL_MEMORY_SECTION_SIZE;
 	_memoryRegions[GENERAL].permissions = PROT_READ | PROT_WRITE | PROT_EXEC;
@@ -266,8 +269,11 @@ freeHeader:
 	goto done;
 }
 
-/* TODO: Currently reallocating image memory is broken since all references to memory inside of heap will fail (i.e. vm->classLoadingPool) */
-/* TODO: Better approach is to be able to deal with multiple suballocator regions */
+/* TODO: Currently reallocating image memory is broken since all references to memory
+ * inside of heap will fail (i.e. vm->classLoadingPool) 
+ *
+ * TODO: A better approach is to be able to deal with multiple suballocator regions.
+ */
 void *
 VMSnapshotImpl::reallocateImageMemory(UDATA size)
 {
@@ -281,16 +287,9 @@ VMSnapshotImpl::initializeHeap(void)
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 	
 	_heap = j9heap_create((J9Heap *)_memoryRegions[GENERAL].alignedStartAddr, _memoryRegions[GENERAL].mappableSize, 0);
-	if (NULL == _heap) {
-		return NULL;
-	}
-
 	_heap32 = j9heap_create((J9Heap *)_memoryRegions[SUB4G].alignedStartAddr, _memoryRegions[SUB4G].mappableSize, 0);
-	if (NULL == _heap32) {
-		return NULL;
-	}
 
-	return _heap;
+	return (NULL == _heap || NULL == _heap32) ? NULL : _heap; 
 }
 
 void *
@@ -363,7 +362,7 @@ void
 VMSnapshotImpl::restoreClassLoaderBlocks(void)
 {
 	/* TRIGGER_J9HOOK_VM_CLASS_LOADER_CREATED is currently unused, if this changes we
-	 * can not simply restore the classloaders
+	 * can not simply restore the classloaders.
 	 */
 	_vm->classLoaderBlocks = _snapshotHeader->savedJavaVMStructs.classLoaderBlocks;
 	_vm->systemClassLoader = _snapshotHeader->savedJavaVMStructs.systemClassLoader;
@@ -404,7 +403,7 @@ printAllSegments(J9MemorySegmentList *segmentList, J9JavaVM *_vm)
 	printf("%p Total segments %d -------------\n", segmentList, (int) i);
 }
 
-J9MemorySegmentList*
+J9MemorySegmentList *
 VMSnapshotImpl::copyUnPersistedMemorySegmentsToNewList(J9MemorySegmentList *oldMemorySegmentList)
 {
 	J9MemorySegment *currentSegment = oldMemorySegmentList->nextSegment;
@@ -495,9 +494,6 @@ VMSnapshotImpl::restorePrimitiveAndArrayClasses(void)
 	return rc;
 }
 
-
-
-
 void
 VMSnapshotImpl::fixupVMStructures(void)
 {
@@ -511,7 +507,7 @@ void
 VMSnapshotImpl::fixupClassLoaders(void)
 {
 	pool_state classLoaderWalkState = {0};
-	J9ClassLoader *currentClassLoader = (J9ClassLoader *) pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
+	J9ClassLoader *currentClassLoader = (J9ClassLoader *)pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
 	while (NULL != currentClassLoader) {
 		currentClassLoader->classPathEntries = NULL;
 		currentClassLoader->sharedLibraries = NULL;
@@ -532,7 +528,7 @@ VMSnapshotImpl::fixupClassLoaders(void)
 		currentClassLoader->jitMetaDataList = NULL;
 		currentClassLoader->flags &= ~J9CLASSLOADER_CLASSPATH_SET; /* TODO in the future persist these as well */
 
-		currentClassLoader = (J9ClassLoader *) pool_nextDo(&classLoaderWalkState);
+		currentClassLoader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState);
 	}
 }
 
@@ -543,27 +539,27 @@ VMSnapshotImpl::removeUnpersistedClassLoaders(void)
 	pool_state classLoaderWalkState = {0};
 	UDATA numOfClassLoaders = pool_numElements(_vm->classLoaderBlocks);
 	U_8 buf[CLASS_LOADER_REMOVE_COUNT * sizeof(J9ClassLoader*)];
-	J9ClassLoader **removeLoaders = (J9ClassLoader **) buf;
+	J9ClassLoader **removeLoaders = (J9ClassLoader **)buf;
 	J9VMThread *vmThread = currentVMThread(_vm);
 	UDATA count = 0;
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
 	if (CLASS_LOADER_REMOVE_COUNT < numOfClassLoaders) {
 
-		removeLoaders = (J9ClassLoader **) j9mem_allocate_memory(numOfClassLoaders * sizeof(J9ClassLoader*), J9MEM_CATEGORY_CLASSES);
+		removeLoaders = (J9ClassLoader **)j9mem_allocate_memory(numOfClassLoaders * sizeof(J9ClassLoader*), J9MEM_CATEGORY_CLASSES);
 		if (NULL == removeLoaders) {
 			/* TODO error handling for fixups */
 			Assert_VM_unreachable();
 		}
 	}
 
-	J9ClassLoader *classloader = (J9ClassLoader *) pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
+	J9ClassLoader *classloader = (J9ClassLoader *)pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
 	while (NULL != classloader) {
 		if (!isImmortalClassLoader(classloader)) {
 			removeLoaders[count] = classloader;
 			count++;
 		}
-		classloader = (J9ClassLoader *) pool_nextDo(&classLoaderWalkState);
+		classloader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState);
 	}
 
 	for (UDATA i = 0; i < count; i++) {
@@ -580,7 +576,7 @@ void
 VMSnapshotImpl::fixupClasses(void)
 {
 	pool_state classLoaderWalkState = {0};
-	J9ClassLoader *classloader = (J9ClassLoader *) pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
+	J9ClassLoader *classloader = (J9ClassLoader *)pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
 	while (NULL != classloader) {
 		J9ClassWalkState walkState = {0};
 		J9Class *currentClass = allLiveClassesStartDo(&walkState, _vm, classloader);
@@ -589,13 +585,13 @@ VMSnapshotImpl::fixupClasses(void)
 			J9ROMClass *romClass = currentClass->romClass;
 
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {
-				fixupArrayClass((J9ArrayClass *) currentClass);
+				fixupArrayClass((J9ArrayClass *)currentClass);
 			} else {
 				fixupClass(currentClass);
 			}
 
 			/* Fixup the last ITable */
-			currentClass->lastITable = (J9ITable *) currentClass->iTable;
+			currentClass->lastITable = (J9ITable *)currentClass->iTable;
 			if (NULL == currentClass->lastITable) {
 				currentClass->lastITable = VMSnapshotImpl::getInvalidITable();
 			}
@@ -604,7 +600,7 @@ VMSnapshotImpl::fixupClasses(void)
 		}
 		allLiveClassesEndDo(&walkState);
 
-		classloader = (J9ClassLoader *) pool_nextDo(&classLoaderWalkState);
+		classloader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState);
 	}
 
 
@@ -655,6 +651,9 @@ VMSnapshotImpl::fixupClass(J9Class *clazz)
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 }
 
+/**
+ * TODO: Clean up control flow.
+ */
 void
 VMSnapshotImpl::fixupJITVtable(J9Class *ramClass)
 {
@@ -693,7 +692,7 @@ VMSnapshotImpl::fixupArrayClass(J9ArrayClass *clazz)
 	clazz->replacedClass = NULL;
 	clazz->callSites = NULL;
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-    clazz->invokeCache = NULL;
+	clazz->invokeCache = NULL;
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	clazz->methodTypes = NULL;
 	clazz->varHandleMethodTypes = NULL;
@@ -735,11 +734,11 @@ VMSnapshotImpl::fixupConstantPool(J9Class *ramClass)
 {
 	J9VMThread *vmThread = currentVMThread(_vm);
 	J9ROMClass *romClass = ramClass->romClass;
-	J9ConstantPool *ramCP = ((J9ConstantPool *) ramClass->ramConstantPool);
+	J9ConstantPool *ramCP = ((J9ConstantPool *)ramClass->ramConstantPool);
 	J9ConstantPool *ramCPWithoutHeader = ramCP + 1;
 	UDATA ramCPCount = romClass->ramConstantPoolCount;
 	UDATA ramCPCountWithoutHeader = ramCPCount - 1;
-	
+
 	/* Zero the ramCP and initialize constant pool */
 	if (ramCPCount != 0) {
 		memset(ramCPWithoutHeader, 0, ramCPCountWithoutHeader * sizeof(J9RAMConstantPoolItem));
@@ -747,6 +746,9 @@ VMSnapshotImpl::fixupConstantPool(J9Class *ramClass)
 	}
 }
 
+/**
+ * TODO: Clean up control flow.
+ */
 bool
 VMSnapshotImpl::readImageFromFile(void)
 {
@@ -763,19 +765,19 @@ VMSnapshotImpl::readImageFromFile(void)
 		goto done;
 	}
 
-	_snapshotHeader = (J9SnapshotHeader *) j9mem_allocate_memory(sizeof(J9SnapshotHeader), J9MEM_CATEGORY_CLASSES);
+	_snapshotHeader = (J9SnapshotHeader *)j9mem_allocate_memory(sizeof(J9SnapshotHeader), J9MEM_CATEGORY_CLASSES);
 	if (NULL == _snapshotHeader) {
 		rc = false;
 		goto done;
 	}
 
-	_memoryRegions = (J9MemoryRegion *) j9mem_allocate_memory(sizeof(J9MemoryRegion) * NUM_OF_MEMORY_SECTIONS, J9MEM_CATEGORY_CLASSES);
+	_memoryRegions = (J9MemoryRegion *)j9mem_allocate_memory(sizeof(J9MemoryRegion) * NUM_OF_MEMORY_SECTIONS, J9MEM_CATEGORY_CLASSES);
 	if (NULL == _memoryRegions) {
 		rc = false;
 		goto freeSnapshotHeader;
 	}
 
-	/* Read snapshot header and memory regions then mmap the rest of the image (heap) into memory */
+	/* Read snapshot header and memory regions then mmap the rest of the image (heap) into memory. */
 	if (-1 == omrfile_read(fileDescriptor, (void *)_snapshotHeader, sizeof(J9SnapshotHeader))) {
 		rc = false;
 		goto freeMemorySections;
@@ -803,7 +805,7 @@ VMSnapshotImpl::readImageFromFile(void)
 	_heap = (J9Heap *)_memoryRegions[GENERAL].alignedStartAddr;
 	_heap32 = (J9Heap *)_memoryRegions[SUB4G].alignedStartAddr;
 	_vm = _snapshotHeader->vm;
-	_vm->ramStateFilePath = (char*) _ramCache;
+	_vm->ramStateFilePath = (char*)_ramCache;
 
 done:
 	if (-1 != fileDescriptor) {
@@ -811,7 +813,6 @@ done:
 	}
 
 	Trc_VM_ReadImageFromFile_Exit();
-
 
 	return rc;
 
@@ -827,7 +828,7 @@ freeSnapshotHeader:
 }
 
 /**
- * Will be removed once the J9JavaVM struct is fully persisted
+ * TODO: Remove once the J9JavaVM struct is fully persisted.
  */
 void
 VMSnapshotImpl::saveJ9JavaVMStructures(void)
@@ -839,17 +840,16 @@ VMSnapshotImpl::saveJ9JavaVMStructures(void)
 }
 
 /**
- * Will be removed once the J9JavaVM struct is fully persisted
+ * TODO: Remove once the J9JavaVM struct is fully persisted.
  */
 bool
 VMSnapshotImpl::restoreJ9JavaVMStructures(void)
 {
 	bool success = true;
-	fixupVMStructures();
 
+	fixupVMStructures();
 	restoreClassLoaderBlocks();
 	restoreMemorySegments();
-
 
 	if (omrthread_monitor_init_with_name(&_vm->classMemorySegments->segmentMutex, 0, "VM class mem segment list")) {
 		success = false;
@@ -870,15 +870,16 @@ VMSnapshotImpl::restoreJ9JavaVMStructures(void)
 bool
 VMSnapshotImpl::writeImageToFile(void)
 {
-	OMRPortLibrary *portLibrary = (OMRPortLibrary *) _portLibrary;
+	OMRPortLibrary *portLibrary = (OMRPortLibrary *)_portLibrary;
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 	Trc_VM_WriteImageToFile_Entry(_heap, _ramCache);
+
 	bool rc = true;
 	UDATA bytesWritten = 0;
 	UDATA currentFileOffset = 0;
 	UDATA pageSize = omrvmem_supported_page_sizes()[0];
 
-	/* calculate aligned file offsets of memory regions */
+	/* Calculate aligned file offsets of memory regions. */
 	UDATA offset = sizeof(J9SnapshotHeader) + (NUM_OF_MEMORY_SECTIONS * sizeof(J9MemoryRegion));
 	for (int i = 0; i < NUM_OF_MEMORY_SECTIONS; i++) {
 		 offset = ROUND_UP_TO_POWEROF2(offset, pageSize);
@@ -909,7 +910,7 @@ VMSnapshotImpl::writeImageToFile(void)
 
 	for (int i = 0; i < NUM_OF_MEMORY_SECTIONS; i++) {
 		currentFileOffset += bytesWritten;
-		/* pad until aligned file offset */
+		/* Pad until aligned file offset. */
 		UDATA padbytes = _memoryRegions[i].fileOffset - currentFileOffset;
 
 		if (omrfile_seek(fileDescriptor, padbytes, EsSeekCur) != (IDATA)_memoryRegions[i].fileOffset) {
@@ -969,7 +970,7 @@ setupVMSnapshotImplPortLibrary(J9PortLibrary *portLibrary)
 
 
 extern "C" void *
-initializeVMSnapshotImpl(J9PortLibrary *portLibrary, BOOLEAN isSnapShotRun, const char* ramCache)
+initializeVMSnapshotImpl(J9PortLibrary *portLibrary, BOOLEAN isSnapshotRun, const char *ramCache)
 {
 	VMSnapshotImplPortLibrary *vmSnapshotImplPortLibrary = setupVMSnapshotImplPortLibrary(portLibrary);
 	VMSnapshotImpl *vmSnapshotImpl = VMSnapshotImpl::createInstance(portLibrary, ramCache);
@@ -980,11 +981,11 @@ initializeVMSnapshotImpl(J9PortLibrary *portLibrary, BOOLEAN isSnapShotRun, cons
 	vmSnapshotImplPortLibrary->vmSnapshotImpl = vmSnapshotImpl;
 	((VMSnapshotImpl *)vmSnapshotImplPortLibrary->vmSnapshotImpl)->setImagePortLib(vmSnapshotImplPortLibrary);
 
-	if (isSnapShotRun && (!vmSnapshotImpl->setupColdRun())) {
+	if (isSnapshotRun && (!vmSnapshotImpl->setupColdRun())) {
 		goto _error;
 	}
 
-	if(!isSnapShotRun && (!vmSnapshotImpl->setupWarmRun())) {
+	if(!isSnapshotRun && (!vmSnapshotImpl->setupWarmRun())) {
 		goto _error;
 	}
 
@@ -997,14 +998,14 @@ _error:
 }
 
 extern "C" BOOLEAN
-setupVMSnapshotImpl(void *snapshotImpl, J9JavaVM* vm, BOOLEAN isSnapShotRun)
+setupVMSnapshotImpl(void *snapshotImpl, J9JavaVM *vm, BOOLEAN isSnapshotRun)
 {
 	VMSnapshotImpl *vmSnapshotImpl = (VMSnapshotImpl *)snapshotImpl;
 
 	vmSnapshotImpl->setJ9JavaVM(vm);
 	vm->vmSnapshotImplPortLibrary = vmSnapshotImpl->getVMSnapshotImplPortLibrary();
 
-	if (isSnapShotRun && (!vmSnapshotImpl->setupColdRunPostInitialize())) {
+	if (isSnapshotRun && (!vmSnapshotImpl->setupColdRunPostInitialize())) {
 		goto _error;
 	}
 
@@ -1039,7 +1040,7 @@ initializeImageClassLoaderObject(J9JavaVM *javaVM, J9ClassLoader *classLoader, j
 
 	issueWriteBarrier();
 	J9VMJAVALANGCLASSLOADER_SET_VMREF(vmThread, classLoaderObject, classLoader);
-	
+
 	omrthread_monitor_exit(javaVM->classLoaderBlocksMutex);
 }
 
@@ -1099,18 +1100,16 @@ initializeImageClassObject(J9VMThread *vmThread, J9ClassLoader *classLoader, J9C
 extern "C" void
 shutdownVMSnapshotImpl(VMSnapshotImplPortLibrary *vmSnapshotImplPortLibrary)
 {
-	if (NULL != vmSnapshotImplPortLibrary->vmSnapshotImpl) {
-		PORT_ACCESS_FROM_PORT(((VMSnapshotImpl *)vmSnapshotImplPortLibrary->vmSnapshotImpl)->getJ9JavaVM()->portLibrary);
-		Assert_VM_notNull(vmSnapshotImplPortLibrary);
+	Assert_VM_notNull(vmSnapshotImplPortLibrary);
 
-		VMSnapshotImpl *vmSnapshotImpl = (VMSnapshotImpl *) vmSnapshotImplPortLibrary->vmSnapshotImpl;
+	VMSnapshotImpl *vmSnapshotImpl = (VMSnapshotImpl *)vmSnapshotImplPortLibrary->vmSnapshotImpl;
+	Assert_VM_notNull(vmSnapshotImpl);
 
-		if (NULL != vmSnapshotImpl) {
-			vmSnapshotImpl->~VMSnapshotImpl();
-			j9mem_free_memory(vmSnapshotImpl);
-		}
-		j9mem_free_memory(vmSnapshotImplPortLibrary);
-	}
+	PORT_ACCESS_FROM_PORT(vmSnapshotImpl->getJ9JavaVM()->portLibrary);
+
+	vmSnapshotImpl->~VMSnapshotImpl();
+	j9mem_free_memory(vmSnapshotImpl);
+	j9mem_free_memory(vmSnapshotImplPortLibrary);
 }
 
 extern "C" void
@@ -1127,7 +1126,7 @@ teardownVMSnapshotImpl(J9JavaVM *javaVM)
 }
 
 extern "C" void
-storeInitialVMMethods(J9JavaVM* javaVM, J9Method* cInitialStaticMethod, J9Method* cInitialSpecialMethod, J9Method* cInitialVirtualMethod)
+storeInitialVMMethods(J9JavaVM *javaVM, J9Method *cInitialStaticMethod, J9Method *cInitialSpecialMethod, J9Method *cInitialVirtualMethod)
 {
 	VMSnapshotImpl *vmSnapshotImpl = (VMSnapshotImpl *)javaVM->vmSnapshotImplPortLibrary->vmSnapshotImpl;
 	Assert_VM_notNull(vmSnapshotImpl);
@@ -1136,7 +1135,7 @@ storeInitialVMMethods(J9JavaVM* javaVM, J9Method* cInitialStaticMethod, J9Method
 }
 
 extern "C" void
-setInitialVMMethods(J9JavaVM* javaVM, J9Method** cInitialStaticMethod, J9Method** cInitialSpecialMethod, J9Method** cInitialVirtualMethod)
+setInitialVMMethods(J9JavaVM *javaVM, J9Method **cInitialStaticMethod, J9Method **cInitialSpecialMethod, J9Method **cInitialVirtualMethod)
 {
 	VMSnapshotImpl *vmSnapshotImpl = (VMSnapshotImpl *)javaVM->vmSnapshotImplPortLibrary->vmSnapshotImpl;
 	Assert_VM_notNull(vmSnapshotImpl);
@@ -1148,11 +1147,9 @@ void *
 image_mem_allocate_memory32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, const char *callSite, uint32_t category)
 {
 	VMSnapshotImpl *vmSnapshotImpl = (VMSnapshotImpl *)((VMSnapshotImplPortLibrary *)portLibrary)->vmSnapshotImpl;
-
 	Assert_VM_notNull(vmSnapshotImpl);
 
-	void *pointer = vmSnapshotImpl->subAllocateMemory(byteAmount, true);
-	return pointer;
+	return vmSnapshotImpl->subAllocateMemory(byteAmount, true);
 }
 
 void
@@ -1168,11 +1165,9 @@ void *
 image_mem_allocate_memory(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, const char *callSite, uint32_t category)
 {
 	VMSnapshotImpl *vmSnapshotImpl = (VMSnapshotImpl *)((VMSnapshotImplPortLibrary *)portLibrary)->vmSnapshotImpl;
-
 	Assert_VM_notNull(vmSnapshotImpl);
 
-	void *pointer = vmSnapshotImpl->subAllocateMemory(byteAmount, false);
-	return pointer;
+	return vmSnapshotImpl->subAllocateMemory(byteAmount, false);
 }
 
 void

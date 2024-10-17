@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2024 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,9 +36,6 @@
 
 class VMSnapshotImpl
 {
-	/*
-	 * Data Members
-	 */
 private:
 	J9JavaVM *_vm;
 	J9PortLibrary *_portLibrary;
@@ -59,9 +56,6 @@ public:
 	static const UDATA SUB4G_MEMORY_SECTION_SIZE = 100 * 1024 * 1024;
 	static const UDATA CLASS_LOADER_REMOVE_COUNT = 8;
 
-	/*
-	 * Function Members
-	 */
 private:
 	bool initializeMonitor(void);
 	bool initializeInvalidITable(void);
@@ -95,10 +89,10 @@ private:
 protected:
 	void *operator new(size_t size, void *memoryPointer) { return memoryPointer; }
 public:
-	VMSnapshotImpl(J9PortLibrary *portLibrary, const char* ramCache);
+	VMSnapshotImpl(J9PortLibrary *portLibrary, const char *ramCache);
 	~VMSnapshotImpl();
 
-	static VMSnapshotImpl* createInstance(J9PortLibrary *portLibrary, const char* ramCache);
+	static VMSnapshotImpl *createInstance(J9PortLibrary *portLibrary, const char *ramCache);
 
 	void setJ9JavaVM(J9JavaVM *vm);
 	void setImagePortLib(VMSnapshotImplPortLibrary *vmSnapshotImplPortLibrary);
@@ -117,18 +111,18 @@ public:
 	void teardownImage(void);
 
 	/* Suballocator functions */
-	void* subAllocateMemory(uintptr_t byteAmount, bool sub4G);
-	void* reallocateMemory(void *address, uintptr_t byteAmount, bool sub4G);
+	void *subAllocateMemory(uintptr_t byteAmount, bool sub4G);
+	void *reallocateMemory(void *address, uintptr_t byteAmount, bool sub4G);
 	void freeSubAllocatedMemory(void *memStart, bool sub4G);
 
 	void destroyMonitor(void);
 	VMSnapshotImplPortLibrary * getVMSnapshotImplPortLibrary(void) { return _vmSnapshotImplPortLibrary; }
-	
+
 	/* VM Initial Methods accessors/mutators */
 	void storeInitialMethods(J9Method *cInitialStaticMethod, J9Method *cInitialSpecialMethod, J9Method *cInitialVirtualMethod);
 	void setInitialMethods(J9Method **cInitialStaticMethod, J9Method **cInitialSpecialMethod, J9Method **cInitialVirtualMethod);
 
-	J9ITable* getInvalidITable(void) { return _invalidITable; }
+	J9ITable *getInvalidITable(void) { return _invalidITable; }
 };
 
 #endif /* VMSNAPSHOTIMPLE_HPP_ */

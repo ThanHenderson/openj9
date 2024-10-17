@@ -727,9 +727,9 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if (!IS_RESTORE_RUN(vm))
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	{
-		if (vmFuncs->internalCreateBaseTypePrimitiveAndArrayClasses(vmThread) != 0) {
+		if (0 != vmFuncs->internalCreateBaseTypePrimitiveAndArrayClasses(vmThread)) {
 			return 1;
 		}
 	}

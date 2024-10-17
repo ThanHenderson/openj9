@@ -25,7 +25,7 @@
 #include "j9consts.h"
 #if defined(J9VM_OPT_SNAPSHOTS)
 #include "j9port_generated.h"
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #include "j9protos.h"
 #include "vm_internal.h"
 #include "ut_j9vm.h"
@@ -318,12 +318,12 @@ hashClassTableNew(J9JavaVM *javaVM, U_32 initialSize)
 	if (J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE)) {
 		flags |= J9HASH_TABLE_DO_NOT_GROW;
 	}
-OMRPortLibrary* privatePortLibrary = OMRPORT_FROM_J9PORT(javaVM->portLibrary);
+	OMRPortLibrary* privatePortLibrary = OMRPORT_FROM_J9PORT(javaVM->portLibrary);
 #if defined(J9VM_OPT_SNAPSHOTS)
-	if (IS_SNAPSHOT_RUN(javaVM)) {
+	if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
 		privatePortLibrary = VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM);
 	}
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	return hashTableNew(privatePortLibrary, J9_GET_CALLSITE(), initialSize, sizeof(KeyHashTableClassEntry), sizeof(char *), flags, J9MEM_CATEGORY_CLASSES, classHashFn, classHashEqualFn, NULL, javaVM);
 }
 
@@ -724,7 +724,7 @@ hashClassLocationTableNew(J9JavaVM *javaVM, U_32 initialSize)
 	if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
 		privatePortLibrary = VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM);
 	}
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	return hashTableNew(privatePortLibrary, J9_GET_CALLSITE(), initialSize, sizeof(J9ClassLocation), sizeof(char *), flags, J9MEM_CATEGORY_CLASSES, classLocationHashFn, classLocationHashEqualFn, NULL, javaVM);
 }
 

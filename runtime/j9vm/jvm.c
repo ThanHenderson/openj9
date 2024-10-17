@@ -1555,7 +1555,7 @@ typedef struct J9SpecialArguments {
 	BOOLEAN captureCommandLine;
 #if defined(J9VM_OPT_SNAPSHOTS)
 	const char *ramCache;
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 } J9SpecialArguments;
 /**
  * Look for special options:
@@ -1610,7 +1610,7 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs)
 		else if (0 == strncmp(args->options[argCursor].optionString, VMOPT_XSNAPSHOT, strlen(VMOPT_XSNAPSHOT))) {
 			specialArgs->ramCache = args->options[argCursor].optionString + strlen(VMOPT_XSNAPSHOT);
 		}
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	}
 
 	if ((NULL != classPathValue) && (NULL != javaCommandValue) && (strcmp(javaCommandValue, classPathValue) == 0)) {
@@ -2249,7 +2249,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		createParams.ramCache = specialArgs.ramCache;
 
 	}
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	if (VERBOSE_INIT == localVerboseLevel) {
 		createParams.flags |= J9_CREATEJAVAVM_VERBOSE_INIT;

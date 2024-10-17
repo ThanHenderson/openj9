@@ -23,7 +23,7 @@
 #include "j9.h"
 #if defined(J9VM_OPT_SNAPSHOTS)
 #include "j9port_generated.h"
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #include "j9protos.h"
 #include "ut_j9vm.h"
 
@@ -127,7 +127,7 @@ hashModuleNameTableNew(J9JavaVM *javaVM, U_32 initialSize)
 
 	OMRPortLibrary* privatePortLibrary = OMRPORT_FROM_J9PORT(javaVM->portLibrary);
 #if defined(J9VM_OPT_SNAPSHOTS)
-	if (IS_SNAPSHOT_RUN(javaVM)) {
+	if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
 		privatePortLibrary = VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM);
 	}
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
@@ -150,10 +150,10 @@ hashPackageTableNew(J9JavaVM *javaVM, U_32 initialSize)
 
 	OMRPortLibrary* privatePortLibrary = OMRPORT_FROM_J9PORT(javaVM->portLibrary);
 #if defined(J9VM_OPT_SNAPSHOTS)
-	if (IS_SNAPSHOT_RUN(javaVM)) {
+	if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
 		privatePortLibrary = VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM);
 	}
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	return hashTableNew(privatePortLibrary, J9_GET_CALLSITE(), initialSize, sizeof(void*), sizeof(void*), flags, J9MEM_CATEGORY_MODULES, packageHashFn, packageHashEqualFn, NULL, javaVM);
 }

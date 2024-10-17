@@ -276,11 +276,12 @@ gcCleanupHeapStructures(J9JavaVM * vm)
 
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if (!IS_RESTORE_RUN(vm))
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	{
 		if (vm->memorySegments) {
 			vm->internalVMFunctions->freeMemorySegmentList(vm, vm->memorySegments);
 		}
+
 		if (vm->classMemorySegments) {
 			vm->internalVMFunctions->freeMemorySegmentList(vm, vm->classMemorySegments);
 		}
@@ -562,9 +563,11 @@ gcInitializeHeapStructures(J9JavaVM *vm)
 	J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
 
 #if defined(J9VM_OPT_SNAPSHOTS)
-	/* if this is a restore run memory segments are already set */
+	/* By this point during a restore run, the memory segments are already allocated
+	 * and initilized.
+	 */
 	if (!IS_RESTORE_RUN(vm))
-#endif /* J9VM_OPT_SNAPSHOTS */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	{
 		/* For now, number of segments to default in pool */
 		if ((vm->memorySegments = vm->internalVMFunctions->allocateMemorySegmentList(vm, 10, OMRMEM_CATEGORY_VM)) == NULL) {

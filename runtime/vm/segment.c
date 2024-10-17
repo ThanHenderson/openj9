@@ -155,7 +155,9 @@ void freeMemorySegment(J9JavaVM *javaVM, J9MemorySegment *segment, BOOLEAN freeD
 			}
 		}
 #if defined(J9VM_OPT_SNAPSHOTS)
-		else if ((segment->type & MEMORY_TYPE_ROM_CLASS) && IS_SNAPSHOTTING_ENABLED(javaVM)) {
+		else if (J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_ROM_CLASS)
+			&& IS_SNAPSHOTTING_ENABLED(javaVM)
+		) {
 			vmsnapshot_free_memory(segment->baseAddress);
 		}
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
@@ -263,7 +265,7 @@ U_32 memorySegmentListSize (J9MemorySegmentList *segmentList)
 static void *
 allocateMemoryForSegment(J9JavaVM *javaVM,J9MemorySegment *segment, J9PortVmemParams *vmemParams, U_32 memoryCategory)
 {
-	void *tmpAddr;
+	void *tmpAddr = NULL;
 	PORT_ACCESS_FROM_GINFO(javaVM);
 #if defined(J9VM_OPT_SNAPSHOTS)
 	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);

@@ -46,7 +46,7 @@ extern "C" {
 #define J9_CREATEJAVAVM_ARGENCODING_UTF8 4
 #define J9_CREATEJAVAVM_ARGENCODING_PLATFORM 8
 #define J9_CREATEJAVAVM_START_JITSERVER 16
-#define J9_CREATEJAVAVM_RAM_CACHE 16
+#define J9_CREATEJAVAVM_RAM_CACHE 32
 
 #define HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE 1
 #define HELPER_TYPE_MONITOR_WAIT_TIMED         2
@@ -5185,7 +5185,7 @@ throwNewJavaIoIOException(JNIEnv *env, const char *message);
 /* VMSnapshotImpl C wrappers */
 
 /**
- * Creates and allocates the jvm image and its' heap
+ * Create and allocate the jvm snapshot and its heap
  *
  * @param javaVM[in] the java vm
  * @param isSnapShotRun[in] specifies if snapshot creation is pending
@@ -5194,7 +5194,7 @@ throwNewJavaIoIOException(JNIEnv *env, const char *message);
  * @return 0 on fail, 1 on success
  */
 void *
-initializeVMSnapshotImpl(J9PortLibrary *portLibrary, BOOLEAN isSnapShotRun, const char* ramCache);
+initializeVMSnapshotImpl(J9PortLibrary *portLibrary, BOOLEAN isSnapshotRun, const char* ramCache);
 
 /**
  * Initialize VMSnapshotImpl
@@ -5206,7 +5206,7 @@ initializeVMSnapshotImpl(J9PortLibrary *portLibrary, BOOLEAN isSnapShotRun, cons
  * @return FALSE on fail, TRUE otherwise
  */
 BOOLEAN
-setupVMSnapshotImpl(void *jvmImage, J9JavaVM *vm, BOOLEAN isSnapShotRun);
+setupVMSnapshotImpl(void *snapshotImpl, J9JavaVM *vm, BOOLEAN isSnapShotRun);
 
 /**
  * Retrieve javaVM from JVm image

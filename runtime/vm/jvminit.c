@@ -956,18 +956,6 @@ freeJavaVM(J9JavaVM * vm)
 		vm->realtimeSizeClasses = NULL;
 	}
 
-#if defined(J9VM_OPT_SNAPSHOTS)
-	if (IS_SNAPSHOTTING_ENABLED(vm)) {
-		VMSnapshotImplPortLibrary* imagePortLibrary = vm->vmSnapshotImplPortLibrary;
-		PORT_ACCESS_FROM_PORT((J9PortLibrary *) imagePortLibrary);
-		j9mem_free_memory(vm); /* kinda weird ??? */
-		shutdownVMSnapshotImpl(imagePortLibrary);
-	} else
-#endif /* defined(J9VM_OPT_SNAPSHOTS) */
-	{
-		j9mem_free_memory(vm);
-	}
-
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	if (NULL != vm->memberNameListsMutex) {
 		omrthread_monitor_destroy(vm->memberNameListsMutex);
@@ -1020,7 +1008,15 @@ freeJavaVM(J9JavaVM * vm)
 	}
 #endif /* JAVA_SPEC_VERSION >= 22 */
 
-	j9mem_free_memory(vm);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOTTING_ENABLED(vm)) {
+		VMSnapshotImplPortLibrary* imagePortLibrary = vm->vmSnapshotImplPortLibrary;
+		shutdownVMSnapshotImpl(imagePortLibrary);
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		j9mem_free_memory(vm);
+	}
 
 	if (NULL != tmpLib->self_handle) {
 		tmpLib->port_shutdown_library(tmpLib);
@@ -1111,20 +1107,21 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if (J9_ARE_ALL_BITS_SET(createParams->flags, J9_CREATEJAVAVM_RAM_CACHE)) {
-		BOOLEAN isSnapShotRun = TRUE;
+		BOOLEAN isSnapshotRun = TRUE;
 		void *vmSnapshotImpl = NULL; /* hack to get around the lack of C++ */
 
 		/* TODO need to use portlib functions */
 		if (-1 != access(createParams->ramCache, F_OK)) {
-			isSnapShotRun = FALSE;
+			isSnapshotRun = FALSE;
 		}
 
-		vmSnapshotImpl = initializeVMSnapshotImpl(portLibrary, isSnapShotRun, createParams->ramCache);
+		vmSnapshotImpl = initializeVMSnapshotImpl(portLibrary, isSnapshotRun, createParams->ramCache);
 
 		if (NULL == vmSnapshotImpl) {
 			return JNI_ENOMEM;
 		}
-		if (isSnapShotRun) {
+
+		if (isSnapshotRun) {
 			vm = allocateJavaVMWithOMR((J9PortLibrary *)getPortLibraryFromVMSnapshotImpl(vmSnapshotImpl));
 		} else {
 			vm = getJ9JavaVMFromVMSnapshotImpl(vmSnapshotImpl);
@@ -1134,11 +1131,11 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 			return JNI_ENOMEM;
 		}
 
-		if (!setupVMSnapshotImpl(vmSnapshotImpl, vm, isSnapShotRun)) {
+		if (!setupVMSnapshotImpl(vmSnapshotImpl, vm, isSnapshotRun)) {
 			return JNI_ENOMEM;
 		}
 
-		if (isSnapShotRun) {
+		if (isSnapshotRun) {
 			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_RAMSTATE_SNAPSHOT_RUN;
 		} else {
 			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_RAMSTATE_RESTORE_RUN;
@@ -2626,7 +2623,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)*/
 
 #if defined(J9VM_OPT_SNAPSHOTS)
-			/* in restore runs the immortal classloaders will have been restored by this point */
+			/* By this point during a restore run, the immortal class loaders are restored. */
 			if (IS_SNAPSHOT_RUN(vm)) {
 				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(vm))))) {
 					goto _error;
@@ -2638,7 +2635,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 					goto _error;
 				}
 			}
-		
+
 			if (J2SE_VERSION(vm) >= J2SE_V11) {
 				vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package),sizeof(J9Module)),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(vm->portLibrary));
 				if (NULL == vm->modularityPool) {
