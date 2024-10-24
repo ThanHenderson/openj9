@@ -1553,9 +1553,6 @@ typedef struct J9SpecialArguments {
 	IDATA *ibmMallocTraceSet;
 	const char *executableJarPath;
 	BOOLEAN captureCommandLine;
-#if defined(J9VM_OPT_SNAPSHOTS)
-	const char *vmSnapshotFilePath;
-#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 } J9SpecialArguments;
 /**
  * Look for special options:
@@ -1606,11 +1603,6 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs)
 		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XXNOOPENJ9COMMANDLINEENV)) {
 			specialArgs->captureCommandLine = FALSE;
 		}
-#if defined(J9VM_OPT_SNAPSHOTS)
-		else if (0 == strncmp(args->options[argCursor].optionString, VMOPT_XSNAPSHOT, strlen(VMOPT_XSNAPSHOT))) {
-			specialArgs->vmSnapshotFilePath = args->options[argCursor].optionString + strlen(VMOPT_XSNAPSHOT);
-		}
-#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	}
 
 	if ((NULL != classPathValue) && (NULL != javaCommandValue) && (strcmp(javaCommandValue, classPathValue) == 0)) {
@@ -1635,6 +1627,27 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs)
 	}
 	return argumentsSize;
 }
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+/*
+ * Scan args backwards to find the final occurence of VMOPT_XSNAPSHOT and initialize
+ * the snapshot parameters accordingly.
+ *
+ * @param args[in] pointer to JavaVMInitArgs instance
+ * @param createParams[in,out] pointer to J9CreateJavaVMCommands intance
+ */
+static void
+snapshotArgumentScan(JavaVMInitArgs *args, J9CreateJavaVMCommands *createParams)
+{
+	for (jint argCursor = args->nOptions - 1; argCursor >= 0; argCursor--) {
+		if (0 == strncmp(args->options[argCursor].optionString, VMOPT_XSNAPSHOT, strlen(VMOPT_XSNAPSHOT))) {
+			createParams->vmSnapshotFilePath = args->options[argCursor].optionString + strlen(VMOPT_XSNAPSHOT);
+			createParams.flags |= J9_CREATEJAVAVM_SNAPSHOT;
+			break;
+		}
+	}
+}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 static void
 printVmArgumentsList(J9VMInitArgs *argList)
@@ -1983,9 +1996,6 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	specialArgs.executableJarPath = NULL;
 	specialArgs.ibmMallocTraceSet = &ibmMallocTraceSet;
 	specialArgs.captureCommandLine = TRUE;
-#if defined(J9VM_OPT_SNAPSHOTS)
-	specialArgs.vmSnapshotFilePath = NULL;
-#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if defined(J9ZOS390)
 	/*
 	 * Temporarily disable capturing the command line on z/OS.
@@ -2244,9 +2254,8 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	localVerboseLevel = specialArgs.localVerboseLevel;
 
 #if defined(J9VM_OPT_SNAPSHOTS)
-	if (NULL != specialArgs.vmSnapshotFilePath) {
-		createParams.flags |= J9_CREATEJAVAVM_SNAPSHOT;
-		createParams.vmSnapshotFilePath = specialArgs.vmSnapshotFilePath;
+	if (NULL != createParams) {
+		snapshotArgumentScan(args, &createParams);
 	}
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
