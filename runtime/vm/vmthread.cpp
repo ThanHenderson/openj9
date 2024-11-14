@@ -456,17 +456,16 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 	setEventFlag(vmThread, J9_PUBLIC_FLAGS_STOPPED);
 
 	// Set j.l.Thread status to TERMINATED.
-	j9object_t receiverObject = vmThread->threadObject;
-	if (NULL != receiverObject) {
 #if JAVA_SPEC_VERSION >= 19
-		j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(vmThread, receiverObject);
-		if (NULL != threadHolder) {
-			J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, J9VMTHREAD_STATE_DEAD);
-		}
-#else /* JAVA_SPEC_VERSION >= 19 */
-		J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, J9VMTHREAD_STATE_DEAD);
-#endif /* JAVA_SPEC_VERSION >= 19 */
+	j9object_t receiverObject = vmThread->carrierThreadObject;
+	j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(vmThread, receiverObject);
+	if (NULL != threadHolder) {
+		J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, J9VMTHREAD_STATE_DEAD);
 	}
+#else /* JAVA_SPEC_VERSION >= 19 */
+	j9object_t receiverObject = vmThread->threadObject;
+	J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, J9VMTHREAD_STATE_DEAD);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	/* We are dead at this point. Clear the suspend bit prior to triggering the thread end hook */
 	clearHaltFlag(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);

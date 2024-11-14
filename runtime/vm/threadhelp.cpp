@@ -108,9 +108,9 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 		object = NULL;
 
 		// Set j.l.Thread status to WAITING.
-		j9object_t receiverObject = vmThread->threadObject;
 		U_64 oldState = J9VMTHREAD_STATE_RUNNING;
 #if JAVA_SPEC_VERSION >= 19
+		j9object_t receiverObject = vmThread->carrierThreadObject;
 		j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(vmThread, receiverObject);
 		if (NULL != threadHolder) {
 			oldState = J9VMJAVALANGTHREADFIELDHOLDER_THREADSTATUS(vmThread, threadHolder);
@@ -121,6 +121,7 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 			}
 		}
 #else /* JAVA_SPEC_VERSION >= 19 */
+		j9object_t receiverObject = vmThread->threadObject;
 		oldState = J9VMJAVALANGTHREAD_THREADSTATUS(vmThread, receiverObject);
 		if (0 != (thrstate & J9_PUBLIC_FLAGS_THREAD_TIMED)) {
 			J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, J9VMTHREAD_STATE_WAITING_TIMED);
@@ -134,13 +135,14 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 		internalAcquireVMAccessClearStatus(vmThread, thrstate);
 
 		// Set j.l.Thread status to oldState.
-		receiverObject = vmThread->threadObject;
 #if JAVA_SPEC_VERSION >= 19
+		receiverObject = vmThread->carrierThreadObject;
 		threadHolder = J9VMJAVALANGTHREAD_HOLDER(vmThread, receiverObject);
 		if (NULL != threadHolder) {
 			J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, oldState);
 		}
 #else /* JAVA_SPEC_VERSION >= 19 */
+		receiverObject = vmThread->threadObject;
 		J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, oldState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
@@ -215,15 +217,16 @@ threadSleepImpl(J9VMThread *vmThread, I_64 millis, I_32 nanos)
 			TRIGGER_J9HOOK_VM_SLEEP(javaVM->hookInterface, vmThread, millis, nanos);
 
 			// Set j.l.Thread status to SLEEPING.
-			j9object_t receiverObject = vmThread->threadObject;
 			U_64 oldState = J9VMTHREAD_STATE_RUNNING;
 #if JAVA_SPEC_VERSION >= 19
+			j9object_t receiverObject = vmThread->carrierThreadObject;
 			j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(vmThread, receiverObject);
 			if (NULL != threadHolder) {
 				oldState = J9VMJAVALANGTHREADFIELDHOLDER_THREADSTATUS(vmThread, threadHolder);
 				J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, J9VMTHREAD_STATE_SLEEPING);
 			}
 #else /* JAVA_SPEC_VERSION >= 19 */
+			j9object_t receiverObject = vmThread->threadObject;
 			oldState = J9VMJAVALANGTHREAD_THREADSTATUS(vmThread, receiverObject);
 			J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, J9VMTHREAD_STATE_SLEEPING);
 #endif /* JAVA_SPEC_VERSION >= 19 */
@@ -233,13 +236,14 @@ threadSleepImpl(J9VMThread *vmThread, I_64 millis, I_32 nanos)
 			internalAcquireVMAccessClearStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
 
 			// Set j.l.Thread status to oldState.
-			receiverObject = vmThread->threadObject;
 #if JAVA_SPEC_VERSION >= 19
+			receiverObject = vmThread->carrierThreadObject;
 			threadHolder = J9VMJAVALANGTHREAD_HOLDER(vmThread, receiverObject);
 			if (NULL != threadHolder) {
 				J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(vmThread, threadHolder, oldState);
 			}
 #else /* JAVA_SPEC_VERSION >= 19 */
+			receiverObject = vmThread->threadObject;
 			J9VMJAVALANGTHREAD_SET_THREADSTATUS(vmThread, receiverObject, oldState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 

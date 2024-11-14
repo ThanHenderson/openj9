@@ -188,14 +188,15 @@ restart:
 		internalReleaseVMAccessSetStatus(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
 releasedAccess:
 		U_64 oldState = J9VMTHREAD_STATE_RUNNING;
-		j9object_t receiverObject = currentThread->threadObject;
 #if JAVA_SPEC_VERSION >= 19
+		j9object_t receiverObject = currentThread->carrierThreadObject;
 		j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, receiverObject);
 		if (NULL != threadHolder) {
 			oldState = J9VMJAVALANGTHREADFIELDHOLDER_THREADSTATUS(currentThread, threadHolder);
 			J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(currentThread, threadHolder, J9VMTHREAD_STATE_BLOCKED);
 		}
 #else /* JAVA_SPEC_VERSION >= 19 */
+		j9object_t receiverObject = currentThread->threadObject;
 		oldState = J9VMJAVALANGTHREAD_THREADSTATUS(currentThread, receiverObject);
 		J9VMJAVALANGTHREAD_SET_THREADSTATUS(currentThread, receiverObject, J9VMTHREAD_STATE_BLOCKED);
 #endif /* JAVA_SPEC_VERSION >= 19 */
@@ -297,13 +298,14 @@ releasedAccess:
 		}
 done:
 		clearEventFlag(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
-		receiverObject = currentThread->threadObject;
 #if JAVA_SPEC_VERSION >= 19
+		receiverObject = currentThread->carrierThreadObject;
 		threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, receiverObject);
 		if (NULL != threadHolder) {
 			J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(currentThread, threadHolder, oldState);
 		}
 #else /* JAVA_SPEC_VERSION >= 19 */
+		receiverObject = currentThread->threadObject;
 		J9VMJAVALANGTHREAD_SET_THREADSTATUS(currentThread, receiverObject, oldState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		/* Clear the SUPPRESS_CONTENDED_EXITS bit in the monitor saying that CONTENDED EXIT can be sent again */

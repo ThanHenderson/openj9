@@ -592,7 +592,7 @@ oom:
 				J9VMJAVALANGTHREAD_SET_STARTED(currentThread, initializee->threadObject, JNI_TRUE);
 				// Set j.l.Thread status to RUNNABLE.
 #if JAVA_SPEC_VERSION >= 19
-				j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, initializee->threadObject);
+				j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, initializee->carrierThreadObject);
 				if (NULL != threadHolder) {
 					J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(currentThread, threadHolder, J9VMTHREAD_STATE_RUNNING);
 				}
